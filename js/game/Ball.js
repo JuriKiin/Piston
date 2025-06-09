@@ -10,7 +10,7 @@ export class Ball extends Entity {
         super(transform, renderer, rigidbody);
         
         this.input = new Input();
-        this.moveSpeed = 100;
+        this.moveSpeed = 300;
         this.size = 20;
     }
 
