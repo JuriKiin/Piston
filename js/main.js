@@ -1,10 +1,9 @@
-import { Ball } from './game/Ball.js';
 import GameLoop from './engine/GameLoop.js';
-import { Paddle } from './game/Paddle.js';
-import { Pong } from './game/Pong.js';
 import { Wall } from './game/Wall.js';
 import { Vector2 } from './engine/Physics/Vector2.js';
-import { AIPaddle } from './game/AIPaddle.js';
+import { Player } from './game/Player.js';
+import { WaterDrop } from './game/WaterDrop.js';
+import { Gruff } from './game/Gruff.js';
 
 const canvas = document.getElementById('fullscreenCanvas');
 const ctx = canvas.getContext('2d');
@@ -14,17 +13,20 @@ function init() {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
-    let ball = new Ball();
-    let playerPaddle = new Paddle();
+    let player = new Player();
+    let gruff = new Gruff();
 
-    let aiPaddle = new AIPaddle(playerPaddle, ball);
+    let topWall = new Wall(new Vector2(canvas.width / 2, 10), new Vector2(canvas.width, 20));
+    let bottomWall = new Wall(new Vector2(canvas.width / 2, canvas.height - 10), new Vector2(canvas.width, 20));
+    let leftWall = new Wall(new Vector2(10, canvas.height / 2), new Vector2(20, canvas.height));
+    let rightWall = new Wall(new Vector2(canvas.width - 10, canvas.height / 2), new Vector2(20, canvas.height));
 
-    let leftWall = new Wall(new Vector2(0, 0));
-    let rightWall = new Wall(new Vector2(canvas.width - 20, 0));
+    const drops = [];
+    for (let i = 0; i < 0; i++) {
+        drops.push(new WaterDrop(50, new Vector2(5, 5)));
+    }
 
-    let pong = new Pong(ball);
-
-    const gameLoop = new GameLoop(canvas, [pong, ball, leftWall, rightWall, aiPaddle, playerPaddle]);
+    const gameLoop = new GameLoop(canvas, [player, gruff, topWall, bottomWall, leftWall, rightWall, ...drops]);
     gameLoop.start();
 }
 

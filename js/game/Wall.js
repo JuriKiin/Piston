@@ -4,15 +4,15 @@ import { Rigidbody } from "../engine/Physics/Rigidbody.js";
 import { Vector2 } from "../engine/Physics/Vector2.js";
 
 export class Wall extends Entity {
-    constructor(position) {
+    constructor(position, size) {
         super();
         this.position = position || new Vector2(0, 0);
+        this.size = size || new Vector2(20, 20);
         this.tag = 'Wall';
     }
 
     start(canvas) {
-        this.size = new Vector2(20, canvas.height);
-        this.transform.position = new Vector2(this.position.x, canvas.height / 2);
+        this.transform.position = this.position;
 
         let rb = new Rigidbody();
         rb.mass = 0;
@@ -26,10 +26,10 @@ export class Wall extends Entity {
     draw(ctx) {
         ctx.fillStyle = '#333';
         ctx.fillRect(
-            this.transform.position.x, 
-            0, 
-            this.size.x, 
+            -this.size.x / 2,
+            -this.size.y / 2,
+            this.size.x,
             this.size.y
-        )
+        );
     }
 }

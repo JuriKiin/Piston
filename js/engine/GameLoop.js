@@ -1,7 +1,6 @@
-import Constants from "./Constants.js";
 import { Entity } from "./Entity.js";
 import { SpatialGrid } from "./Physics/Colliders/SpacialGrid.js";
-import { Vector2 } from "./Physics/Vector2.js";
+import Constants from "./static/Constants.js";
 
 export default class GameLoop {
 
@@ -48,7 +47,7 @@ export default class GameLoop {
         }
 
         this.spatialGrid.clear();
-        const activeColliders = this.entities.filter(e => e.rigidbody && e.rigidbody.collider.enabled);
+        const activeColliders = this.entities.filter(e => e.rigidbody && e.rigidbody.collider && e.rigidbody.collider.enabled);
         for (const entity of activeColliders) {
             this.spatialGrid.insert(entity);
         }
@@ -84,55 +83,98 @@ export default class GameLoop {
 
         if (isAStatic && isBStatic) return;
 
-        const { normal, penetration } = collisionInfo;
+        let { normal, penetration } = collisionInfo;
+        // Ensure normal is normalized and not zero
+        if (!normal || (normal.x === 0 && normal.y === 0)) return;
+        const mag = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
+        if (mag === 0) return;
+        normal = { x: normal.x / mag, y: normal.y / mag };
 
-        // --- 1. Impulse Resolution (Handle Velocity Change / Bounce) ---
         const relativeVelocity = rbB.velocity.clone().subtract(rbA.velocity);
         const velocityAlongNormal = relativeVelocity.dot(normal);
 
         if (velocityAlongNormal > 0) return;
 
         const restitution = Math.min(rbA.physicsMaterial.restitution, rbB.physicsMaterial.restitution);
-        
         const invMassA = isAStatic ? 0 : 1 / rbA.mass;
         const invMassB = isBStatic ? 0 : 1 / rbB.mass;
 
         let impulseScalar = -(1 + restitution) * velocityAlongNormal;
         impulseScalar /= (invMassA + invMassB);
 
-        const impulse = normal.clone().scale(impulseScalar);
+        const impulse = new rbA.velocity.constructor(normal.x, normal.y).scale(impulseScalar);
 
         if (!isAStatic) {
             rbA.velocity.subtract(impulse.clone().scale(invMassA));
+            if (rbA.transform && rbA.transform.position) {
+                rbA.transform.position.subtract(normal.clone().scale(penetration * invMassA / (invMassA + invMassB)));
+            }
         }
         if (!isBStatic) {
             rbB.velocity.add(impulse.clone().scale(invMassB));
+            if (rbB.transform && rbB.transform.position) {
+                rbB.transform.position.add(normal.clone().scale(penetration * invMassB / (invMassA + invMassB)));
+            }
         }
 
-        this.applyCorrection(entityA, entityB, penetration, normal);
+        if (!isAStatic && rbA.lockRotation === false && typeof rbA.alignRotationToNormal === 'function') {
+            rbA.alignRotationToNormal(normal);
+        }
+        if (!isBStatic && rbB.lockRotation === false && typeof rbB.alignRotationToNormal === 'function') {
+            rbB.alignRotationToNormal({ x: -normal.x, y: -normal.y });
+        }
     }
-    
+
     applyCorrection(entityA, entityB, penetration, normal) {
         const isAStatic = entityA.rigidbody?.isStatic || !entityA.rigidbody || entityA.rigidbody.mass <= 0;
         const isBStatic = entityB.rigidbody?.isStatic || !entityB.rigidbody || entityB.rigidbody.mass <= 0;
+        const overCorrection = 1.75;
+        let correctedNormal = { ...normal };
 
-        const invMassA = isAStatic ? 0 : 1 / entityA.rigidbody.mass;
-        const invMassB = isBStatic ? 0 : 1 / entityB.rigidbody.mass;
+        // Special handling for circle vs box: always orient normal from box to circle
+        const isACircle = entityA.rigidbody?.collider?.constructor?.name === 'CircleCollider';
+        const isBBox = entityB.rigidbody?.collider?.constructor?.name === 'BoxCollider';
+        const isBCircle = entityB.rigidbody?.collider?.constructor?.name === 'CircleCollider';
+        const isABox = entityA.rigidbody?.collider?.constructor?.name === 'BoxCollider';
 
-        const totalInvMass = invMassA + invMassB;
-        if (totalInvMass === 0) return;
-
-        const slop = 0.01;
-        const percent = 0.5;
-        
-        const correctionAmount = (Math.max(penetration - slop, 0) / totalInvMass) * percent;
-        const correctionVector = normal.clone().scale(correctionAmount);
-
-        if (!isAStatic) {
-            entityA.transform.position.subtract(correctionVector.clone().scale(invMassA));
-        }
-        if (!isBStatic) {
-            entityB.transform.position.add(correctionVector.clone().scale(invMassB));
+        if (!isAStatic && isBStatic) {
+            // Move A (dynamic) out of B (static)
+            let dir = entityA.transform.position.clone().subtract(entityB.transform.position);
+            // For circle vs box, always orient normal from box to circle
+            if (isACircle && isBBox) {
+                dir = entityA.transform.position.clone().subtract(entityB.transform.position);
+            }
+            if (dir.dot(normal) < 0) {
+                correctedNormal.x = -normal.x;
+                correctedNormal.y = -normal.y;
+            }
+            const correctionVector = new entityA.transform.position.constructor(correctedNormal.x, correctedNormal.y).scale(penetration * overCorrection);
+            entityA.transform.position.add(correctionVector);
+        } else if (isAStatic && !isBStatic) {
+            // Move B (dynamic) out of A (static)
+            let dir = entityB.transform.position.clone().subtract(entityA.transform.position);
+            if (isBCircle && isABox) {
+                dir = entityB.transform.position.clone().subtract(entityA.transform.position);
+            }
+            if (dir.dot(normal) < 0) {
+                correctedNormal.x = -normal.x;
+                correctedNormal.y = -normal.y;
+            }
+            const correctionVector = new entityA.transform.position.constructor(correctedNormal.x, correctedNormal.y).scale(penetration * overCorrection);
+            entityB.transform.position.add(correctionVector);
+        } else if (!isAStatic && !isBStatic) {
+            // Split correction for two dynamic objects
+            let dir = entityB.transform.position.clone().subtract(entityA.transform.position);
+            if ((isACircle && isBBox) || (isBCircle && isABox)) {
+                dir = entityB.transform.position.clone().subtract(entityA.transform.position);
+            }
+            if (dir.dot(normal) < 0) {
+                correctedNormal.x = -normal.x;
+                correctedNormal.y = -normal.y;
+            }
+            const correctionVector = new entityA.transform.position.constructor(correctedNormal.x, correctedNormal.y).scale((penetration * overCorrection) / 2);
+            entityA.transform.position.add(correctionVector);
+            entityB.transform.position.subtract(correctionVector);
         }
     }
 

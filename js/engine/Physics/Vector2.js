@@ -75,4 +75,8 @@ export class Vector2 {
     static get Zero() {
         return new Vector2(0, 0);
     }
+
+    static get One() {
+        return new Vector2(1, 1);
+    }
 }

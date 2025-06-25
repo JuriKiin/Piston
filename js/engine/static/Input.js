@@ -1,4 +1,4 @@
-export class Input {
+class Input {
     constructor() {
         this.keys = new Set();
         this.keysUp = new Set();
@@ -97,3 +97,6 @@ export class Input {
         );
     }
 }
+
+const input = new Input();
+export default input;
