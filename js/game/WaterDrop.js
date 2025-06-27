@@ -1,5 +1,5 @@
 import { Entity } from "../engine/Entity.js";
-import { BoxCollider } from "../engine/Physics/Colliders/BoxCollider.js";
+import { PolygonCollider } from "../engine/Physics/Colliders/PolygonCollider.js";
 import { PhysicsMaterial } from "../engine/Physics/PhysicsMaterial.js";
 import { Rigidbody } from "../engine/Physics/Rigidbody.js";
 import { Vector2 } from "../engine/Physics/Vector2.js";
@@ -25,7 +25,7 @@ export class WaterDrop extends Entity {
         rb.mass = 1;
         rb.useGravity = true;
         rb.physicsMaterial = PhysicsMaterial.Frictionless;
-        rb.collider = new BoxCollider(this, this.transform.size.x, this.transform.size.y);
+        rb.collider = new PolygonCollider(this, 4, this.transform.size.x, this.transform.size.y);
         rb.isStatic = false;
 
         this.rigidbody = rb;

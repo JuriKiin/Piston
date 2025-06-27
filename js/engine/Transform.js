@@ -36,4 +36,10 @@ export class Transform {
             this.rotation = 360;
         }
     }
+
+    //This is used to resolve collisions
+    move(vec) {
+        this.position.x += vec.x;
+        this.position.y += vec.y;
+    }
 }

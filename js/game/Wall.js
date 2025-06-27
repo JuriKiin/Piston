@@ -1,5 +1,5 @@
 import { Entity } from "../engine/Entity.js";
-import { BoxCollider } from "../engine/Physics/Colliders/BoxCollider.js";
+import { PolygonCollider } from "../engine/Physics/Colliders/PolygonCollider.js";
 import { Rigidbody } from "../engine/Physics/Rigidbody.js";
 import { Vector2 } from "../engine/Physics/Vector2.js";
 
@@ -17,10 +17,14 @@ export class Wall extends Entity {
         let rb = new Rigidbody();
         rb.mass = 0;
         rb.useGravity = false;
-        rb.collider = new BoxCollider(this, this.size.x, this.size.y);
+        rb.collider = new PolygonCollider(this, 4, this.size.x, this.size.y);
         rb.isStatic = true;
 
         this.rigidbody = rb;
+    }
+
+    update(ctx) {
+        super.update(ctx);
     }
 
     draw(ctx) {

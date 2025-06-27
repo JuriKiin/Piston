@@ -2,19 +2,27 @@ import { Entity } from "./Entity.js";
 import { SpatialGrid } from "./Physics/Colliders/SpacialGrid.js";
 import Constants from "./static/Constants.js";
 
+/**
+ * The main game loop responsible for updating and rendering entities,
+ * and handling the physics simulation including collision detection and resolution.
+ */
 export default class GameLoop {
 
     constructor(canvas, entities) {
         this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d');
         this.entities = entities ?? [];
-        this.spatialGrid = new SpatialGrid(canvas.width, canvas.height, 50);
+        this.spatialGrid = new SpatialGrid(canvas.width, canvas.height, 50, false, this.ctx); // Cell size of 50
         this.lastTime = null;
+        this.physicsIterations = 1; // Increased iterations for stability
     }
 
+    /**
+     * Starts the game loop.
+     */
     start() {
         if (this.entities.length === 0) {
-            throw new Error("No entities to start the game loop with.");
+            console.warn("GameLoop starting with no entities.");
         }
 
         this.entities.forEach(entity => {
@@ -33,158 +41,113 @@ export default class GameLoop {
         requestAnimationFrame(loop);
     }
 
+    /**
+     * The main update function, called every frame.
+     */
     update() {
+        // --- Time Management ---
         if (!this.lastTime) this.lastTime = Date.now();
         Constants.DELTA_TIME = (Date.now() - this.lastTime) / 1000;
         this.lastTime = Date.now();
 
+        // --- Rendering & Entity Updates ---
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // --- Update Spacial Grid ---
+        this.activeColliders = this.entities.filter(e => e.rigidbody && e.rigidbody.collider && e.rigidbody.collider.enabled);
+        if (this.activeColliders.length > 0) {
+            this.spatialGrid.update(this.activeColliders);
+        }
+        // Update all entities (handles movement, input, etc.)
         for(const entity of this.entities) {
             if (entity instanceof Entity) {
-                entity.update(this.ctx)
+                entity.update(this.ctx);
             }
         }
 
-        this.spatialGrid.clear();
-        const activeColliders = this.entities.filter(e => e.rigidbody && e.rigidbody.collider && e.rigidbody.collider.enabled);
-        for (const entity of activeColliders) {
-            this.spatialGrid.insert(entity);
-        }
-
-        const collisionPairs = new Set();
+        // --- Physics Step ---
+        this.handleCollisions();
+    }
+    
+    /**
+     * Manages the entire collision detection and resolution pipeline for a frame.
+     */
+    handleCollisions() {
+        const collisions = [];
         
-        for (const entityA of activeColliders) {
+        // --- Narrowphase: Detailed Collision Checks ---
+        const collisionPairs = new Set();
+        for (const entityA of this.activeColliders) {
             const nearbyEntities = this.spatialGrid.getNearby(entityA);
+            const previousCollisions = new Set(entityA.rigidbody.collider.activeCollisions);
+            const currentCollisions = new Set();
+
             for (const entityB of nearbyEntities) {
+                if (entityA === entityB) continue;
                 const pairKey = [entityA.id, entityB.id].sort().join('-');
                 if (collisionPairs.has(pairKey)) continue;
 
                 const collisionInfo = entityA.rigidbody.collider.getCollisionDetails(entityB.rigidbody.collider);
-
                 if (collisionInfo) {
                     collisionPairs.add(pairKey);
-                    if (entityA.onCollisionEnter) entityA.onCollisionEnter(entityB);
-                    if (entityB.onCollisionEnter) entityB.onCollisionEnter(entityA);
-                    this.resolvePhysicalCollision(entityA, entityB, collisionInfo);
+                    currentCollisions.add(entityB);
+                    if (!previousCollisions.has(entityB)) {
+                        if (entityA.rigidbody.collider.onCollisionEnter) entityA.rigidbody.collider.onCollisionEnter(entityB.rigidbody.collider);
+                        if (entityB.rigidbody.collider.onCollisionEnter) entityB.rigidbody.collider.onCollisionEnter(entityA.rigidbody.collider);
+                    }
                 }
+            }
+
+            // Detect collision exits
+            for (const exitedEntity of previousCollisions) {
+                if (!currentCollisions.has(exitedEntity)) {
+                    console.log(entityA.tag, exitedEntity.tag);
+                    entityA.rigidbody.collider.onCollisionExit(exitedEntity.rigidbody.collider);
+                    exitedEntity.rigidbody.collider.onCollisionExit(entityA.rigidbody.collider);
+                }
+            }
+
+            // Update active collisions
+            entityA.rigidbody.collider.activeCollisions = currentCollisions;
+        }
+        
+        // --- Iterative Resolution Phase ---
+        // By running the solver multiple times, we improve stability and reduce jitter.
+        for(let i = 0; i < this.physicsIterations; i++) {
+            for (const { entityA, entityB, collisionInfo } of collisions) {
+                this.resolvePhysicalCollision(entityA, entityB, collisionInfo);
             }
         }
     }
 
+    /**
+     * Orchestrates the two-step collision resolution process: positional correction and impulse.
+     */
     resolvePhysicalCollision(entityA, entityB, collisionInfo) {
         const rbA = entityA.rigidbody;
         const rbB = entityB.rigidbody;
 
-        if (!rbA || !rbB) return;
-
-        const isAStatic = rbA.isStatic || rbA.mass <= 0;
-        const isBStatic = rbB.isStatic || rbB.mass <= 0;
-
-        if (isAStatic && isBStatic) return;
-
-        let { normal, penetration } = collisionInfo;
-        // Ensure normal is normalized and not zero
-        if (!normal || (normal.x === 0 && normal.y === 0)) return;
-        const mag = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
-        if (mag === 0) return;
-        normal = { x: normal.x / mag, y: normal.y / mag };
-
-        const relativeVelocity = rbB.velocity.clone().subtract(rbA.velocity);
-        const velocityAlongNormal = relativeVelocity.dot(normal);
-
-        if (velocityAlongNormal > 0) return;
-
-        const restitution = Math.min(rbA.physicsMaterial.restitution, rbB.physicsMaterial.restitution);
-        const invMassA = isAStatic ? 0 : 1 / rbA.mass;
-        const invMassB = isBStatic ? 0 : 1 / rbB.mass;
-
-        let impulseScalar = -(1 + restitution) * velocityAlongNormal;
-        impulseScalar /= (invMassA + invMassB);
-
-        const impulse = new rbA.velocity.constructor(normal.x, normal.y).scale(impulseScalar);
-
-        if (!isAStatic) {
-            rbA.velocity.subtract(impulse.clone().scale(invMassA));
-            if (rbA.transform && rbA.transform.position) {
-                rbA.transform.position.subtract(normal.clone().scale(penetration * invMassA / (invMassA + invMassB)));
-            }
-        }
-        if (!isBStatic) {
-            rbB.velocity.add(impulse.clone().scale(invMassB));
-            if (rbB.transform && rbB.transform.position) {
-                rbB.transform.position.add(normal.clone().scale(penetration * invMassB / (invMassA + invMassB)));
-            }
-        }
-
-        if (!isAStatic && rbA.lockRotation === false && typeof rbA.alignRotationToNormal === 'function') {
-            rbA.alignRotationToNormal(normal);
-        }
-        if (!isBStatic && rbB.lockRotation === false && typeof rbB.alignRotationToNormal === 'function') {
-            rbB.alignRotationToNormal({ x: -normal.x, y: -normal.y });
-        }
+        // if (!rbA.isStatic) entityA.transform.move(collisionInfo.normal.scale(collisionInfo.depth));
+        // if (!rbB.isStatic) entityB.transform.move(collisionInfo.normal.scale(-collisionInfo.depth));
     }
 
-    applyCorrection(entityA, entityB, penetration, normal) {
-        const isAStatic = entityA.rigidbody?.isStatic || !entityA.rigidbody || entityA.rigidbody.mass <= 0;
-        const isBStatic = entityB.rigidbody?.isStatic || !entityB.rigidbody || entityB.rigidbody.mass <= 0;
-        const overCorrection = 1.75;
-        let correctedNormal = { ...normal };
-
-        // Special handling for circle vs box: always orient normal from box to circle
-        const isACircle = entityA.rigidbody?.collider?.constructor?.name === 'CircleCollider';
-        const isBBox = entityB.rigidbody?.collider?.constructor?.name === 'BoxCollider';
-        const isBCircle = entityB.rigidbody?.collider?.constructor?.name === 'CircleCollider';
-        const isABox = entityA.rigidbody?.collider?.constructor?.name === 'BoxCollider';
-
-        if (!isAStatic && isBStatic) {
-            // Move A (dynamic) out of B (static)
-            let dir = entityA.transform.position.clone().subtract(entityB.transform.position);
-            // For circle vs box, always orient normal from box to circle
-            if (isACircle && isBBox) {
-                dir = entityA.transform.position.clone().subtract(entityB.transform.position);
-            }
-            if (dir.dot(normal) < 0) {
-                correctedNormal.x = -normal.x;
-                correctedNormal.y = -normal.y;
-            }
-            const correctionVector = new entityA.transform.position.constructor(correctedNormal.x, correctedNormal.y).scale(penetration * overCorrection);
-            entityA.transform.position.add(correctionVector);
-        } else if (isAStatic && !isBStatic) {
-            // Move B (dynamic) out of A (static)
-            let dir = entityB.transform.position.clone().subtract(entityA.transform.position);
-            if (isBCircle && isABox) {
-                dir = entityB.transform.position.clone().subtract(entityA.transform.position);
-            }
-            if (dir.dot(normal) < 0) {
-                correctedNormal.x = -normal.x;
-                correctedNormal.y = -normal.y;
-            }
-            const correctionVector = new entityA.transform.position.constructor(correctedNormal.x, correctedNormal.y).scale(penetration * overCorrection);
-            entityB.transform.position.add(correctionVector);
-        } else if (!isAStatic && !isBStatic) {
-            // Split correction for two dynamic objects
-            let dir = entityB.transform.position.clone().subtract(entityA.transform.position);
-            if ((isACircle && isBBox) || (isBCircle && isABox)) {
-                dir = entityB.transform.position.clone().subtract(entityA.transform.position);
-            }
-            if (dir.dot(normal) < 0) {
-                correctedNormal.x = -normal.x;
-                correctedNormal.y = -normal.y;
-            }
-            const correctionVector = new entityA.transform.position.constructor(correctedNormal.x, correctedNormal.y).scale((penetration * overCorrection) / 2);
-            entityA.transform.position.add(correctionVector);
-            entityB.transform.position.subtract(correctionVector);
-        }
-    }
-
-
+    /**
+     * Adds an entity to the game loop.
+     * @param {Entity} entity The entity to add.
+     */
     add(entity) {
         if (entity && entity instanceof Entity) {
             this.entities.push(entity);
-        } 
+        } else {
+            console.error("Attempted to add an invalid object to the GameLoop. Must be an Entity.", entity);
+        }
     }
 
+    /**
+     * Finds the first entity with a given tag.
+     * @param {string} tag The tag to search for.
+     * @returns {Entity|undefined} The found entity, or undefined.
+     */
     findObjectWithTag(tag) {
         return this.entities.find(entity => entity.tag === tag);
     }

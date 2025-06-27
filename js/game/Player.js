@@ -1,6 +1,6 @@
 import { Entity } from "../engine/Entity.js";
-import { BoxCollider } from "../engine/Physics/Colliders/BoxCollider.js";
 import { CircleCollider } from "../engine/Physics/Colliders/CircleCollider.js";
+import { PolygonCollider } from "../engine/Physics/Colliders/PolygonCollider.js";
 import { PhysicsMaterial } from "../engine/Physics/PhysicsMaterial.js";
 import { Rigidbody } from "../engine/Physics/Rigidbody.js";
 import { Vector2 } from "../engine/Physics/Vector2.js";
@@ -21,12 +21,18 @@ export class Player extends Entity {
         let rb = new Rigidbody();
         rb.mass = 1;
         rb.useGravity = false;
-       rb.collider = new BoxCollider(this, this.transform.size.x, this.transform.size.y);
-        // rb.collider = new CircleCollider(this, this.transform.size.x / 2);
+        rb.collider = new PolygonCollider(this, 4, this.transform.size.x, this.transform.size.y);
         rb.physicsMaterial = PhysicsMaterial.Frictionless;
         rb.isStatic = true;
 
         this.rigidbody = rb;
+
+        this.rigidbody.collider.onCollisionEnter = ((other) => {
+            if (other.entity.tag === 'Gruff') { this.color = '#ba3e0d'; }
+        });
+        this.rigidbody.collider.onCollisionExit = ((other) => {
+            if (other.entity.tag === 'Gruff') { this.color = '#333'; }
+        });
     }
 
     update(ctx) {
@@ -57,14 +63,6 @@ export class Player extends Entity {
             this.rigidbody.velocity = moveDirection.normalize().scale(this.speed);
         } else {
             this.rigidbody.velocity = new Vector2(0, 0);
-        }
-    }
-
-    onCollisionEnter(other) {
-        if (other.tag === 'Enemy') {
-            this.color = 'red';
-        } else {
-            this.color = '#333'; // Reset color if not colliding with an enemy
         }
     }
 

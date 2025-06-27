@@ -14,96 +14,116 @@ export class CircleCollider extends Collider {
     }
 
     checkCollision(otherCollider) {
+        // This is part of the double-dispatch pattern.
+        // It calls the appropriate collision method on the other collider, passing itself in.
+        // e.g., otherCollider.circleCollision(this) or otherCollider.boxCollision(this)
         return otherCollider.circleCollision(this);
     }
 
-    // Improved circle-vs-circle collision
+    /**
+     * Provides collision details for this Circle against another Circle.
+     * @param {CircleCollider} otherCircle The other circle collider.
+     * @returns {object|null} Collision details { depth, normal } or null if no collision.
+     */
     circleCollision(otherCircle) {
         const posA = this.entity.transform.position;
         const posB = otherCircle.entity.transform.position;
-        const radiusA = this.radius;
-        const radiusB = otherCircle.radius;
-        const distanceVec = posB.clone().subtract(posA);
-        const distance = distanceVec.magnitude();
-        const sumOfRadii = radiusA + radiusB;
-        if (distance < sumOfRadii) {
-            let normal = distance > 0 ? distanceVec.clone().normalize() : new Vector2(0, -1);
-            // Always point normal from this to other
+
+        const distance = Vector2.distance(posA, posB);
+        const radii = this.radius + otherCircle.radius;
+
+        if (distance >= radii) return null; // No collision
+        else {
+            const normal = posB.clone().subtract(posA).normalize();
+            const depth = radii - distance;
+
             return {
-                penetration: sumOfRadii - distance,
+                depth: depth,
                 normal: normal
             };
         }
-        return null;
     }
 
-    // Accurate circle-vs-OBB collision with robust normal
-    boxCollision(boxCollider, ctx) {
+    /**
+     * Provides collision details for this Circle against a BoxCollider (OBB).
+     * @param {BoxCollider} boxCollider The box collider.
+     * @returns {object|null} Collision details { depth, normal, contactPoint } or null.
+     */
+    boxCollision(boxCollider) {
         const circlePos = this.entity.transform.position;
         const boxPos = boxCollider.entity.transform.position;
-        const angle = -(boxCollider.entity.transform.rotation || 0) * (Math.PI / 180);
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
+        const boxAngle = -boxCollider.entity.transform.rotation * (Math.PI / 180);
 
-        const relX = circlePos.x - boxPos.x;
-        const relY = circlePos.y - boxPos.y;
-        const localX = relX * cos - relY * sin;
-        const localY = relX * sin + relY * cos;
+        // Step 1: Transform the circle's center into the box's local coordinate system.
+        const cosA = Math.cos(boxAngle);
+        const sinA = Math.sin(boxAngle);
+        const relativePos = circlePos.clone().subtract(boxPos);
 
+        const localCirclePos = new Vector2(
+            relativePos.x * cosA - relativePos.y * sinA,
+            relativePos.x * sinA + relativePos.y * cosA
+        );
+
+        // Step 2: Find the closest point on the AABB (in its own local space) to the circle's center.
         const halfW = boxCollider.width / 2;
         const halfH = boxCollider.height / 2;
-        const closestX = Math.max(-halfW, Math.min(localX, halfW));
-        const closestY = Math.max(-halfH, Math.min(localY, halfH));
 
-        const distX = localX - closestX;
-        const distY = localY - closestY;
-        const distSq = distX * distX + distY * distY;
-        const radius = this.radius;
+        const closestPointLocal = new Vector2(
+            Math.max(-halfW, Math.min(localCirclePos.x, halfW)),
+            Math.max(-halfH, Math.min(localCirclePos.y, halfH))
+        );
 
-        if (distSq < radius * radius) {
-            const contactLocal = new Vector2(closestX, closestY);
+        // Step 3: Check if the distance from the circle's center to this closest point is less than the radius.
+        const distanceVec = localCirclePos.clone().subtract(closestPointLocal);
+        // CORRECTED: Replaced magnitudeSq() with direct calculation.
+        const distanceSq = distanceVec.x * distanceVec.x + distanceVec.y * distanceVec.y;
+
+        if (distanceSq < this.radius * this.radius) {
+            // Collision detected! Now, gather the necessary information for resolution.
+            const distance = Math.sqrt(distanceSq);
+            const depth = this.radius - distance;
+
+            // The collision normal is the vector from the closest point to the circle's center.
+            // We calculate it in the box's local space and then rotate it back to world space.
+            let normalWorld;
+            if (distance > 0.0001) {
+                const normalLocal = distanceVec.normalize();
+                normalWorld = new Vector2(
+                    normalLocal.x * cosA + normalLocal.y * -sinA,
+                    normalLocal.x * sinA + normalLocal.y * cosA
+                );
+            } else {
+                // The circle's center is inside the box. Fallback normal calculation.
+                // The normal should point from the box center towards the circle center.
+                normalWorld = circlePos.clone().subtract(boxPos).normalize();
+                 // CORRECTED: Replaced magnitudeSq() with a check for a zero vector.
+                if (normalWorld.x === 0 && normalWorld.y === 0) {
+                    // Failsafe if centers are aligned, push upwards.
+                    normalWorld = new Vector2(0, 1);
+                }
+            }
+            
+            // Transform the contact point from local space back to world space.
             const contactWorld = new Vector2(
-                contactLocal.x * cos + contactLocal.y * -sin + boxPos.x,
-                contactLocal.x * sin + contactLocal.y * cos + boxPos.y
+                closestPointLocal.x * cosA + closestPointLocal.y * -sinA + boxPos.x,
+                closestPointLocal.x * sinA + closestPointLocal.y * cosA + boxPos.y
             );
 
-            let normalWorld = circlePos.clone().subtract(contactWorld);
-            if (normalWorld.magnitude() < 0.0001) normalWorld = new Vector2(0, -1);
-            else normalWorld.normalize();
-
-            // Debug visuals
-            ctx.save();
-            ctx.strokeStyle = 'red';
-            ctx.beginPath();
-            ctx.arc(localX, localY, 3, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.strokeStyle = 'blue';
-            ctx.beginPath();
-            ctx.arc(closestX, closestY, 3, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.strokeStyle = 'green';
-            ctx.beginPath();
-            ctx.moveTo(contactWorld.x, contactWorld.y);
-            ctx.lineTo(circlePos.x, circlePos.y);
-            ctx.stroke();
-            ctx.restore();
-
-            // Continuous collision detection: project circle's velocity onto normal
-            const velocity = this.entity.rigidbody.velocity;
-            const velocityAlongNormal = velocity.dot(normalWorld);
-            if (velocityAlongNormal < 0) {
-                const correction = normalWorld.clone().scale(radius - Math.sqrt(distSq));
-                this.entity.transform.position.add(correction);
+            // The normal should always point away from the box and towards the circle.
+            // Let's ensure this direction is correct.
+            const directionFromBoxToCircle = circlePos.clone().subtract(contactWorld);
+            if (directionFromBoxToCircle.dot(normalWorld) < 0) {
+                normalWorld.scale(-1); // Flip the normal if it's pointing the wrong way.
             }
 
             return {
-                penetration: radius - Math.sqrt(distSq),
+                depth: depth,
                 normal: normalWorld,
                 contactPoint: contactWorld
             };
         }
+
+        // No collision.
         return null;
     }
 

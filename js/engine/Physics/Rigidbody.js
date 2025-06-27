@@ -11,8 +11,7 @@ export class Rigidbody {
         this.isStatic = false;
         this.physicsMaterial = physicsMaterial ?? PhysicsMaterial.Default;
         this.collider = collider ?? null;
-        this.lockRotation = lockRotation; // New field
-        
+        this.lockRotation = lockRotation ?? false
     }
 
     update() {
@@ -35,13 +34,9 @@ export class Rigidbody {
         this.velocity = new Vector2(0, 0);
     }
 
-    // Utility: set rotation to align with a given normal (in degrees)
     alignRotationToNormal(normal) {
-        // Only if not locked
         if (this.lockRotation) return;
-        // atan2 returns radians, convert to degrees
         const angle = Math.atan2(normal.y, normal.x) * (180 / Math.PI);
-        // For a rectangle, aligning the 'up' (y) axis to the normal means subtracting 90 degrees
         if (this.collider && this.collider.entity && this.collider.entity.transform) {
             this.collider.entity.transform.rotation = angle - 90;
         }

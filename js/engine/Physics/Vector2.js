@@ -1,3 +1,6 @@
+import MathLib from "../static/Math.js";
+
+
 export class Vector2 {
     constructor(x, y) {
         this.x = x ?? 0;
@@ -50,7 +53,7 @@ export class Vector2 {
     }
 
     static distance(vector1, vector2) {
-        Math.sqrt(
+        return Math.sqrt(
             Math.pow(vector2.x - vector1.x, 2) +
             Math.pow(vector2.y - vector1.y, 2)
         );
@@ -58,6 +61,17 @@ export class Vector2 {
 
     static multiply(vector, scalar) {
         return new Vector2(vector.x * scalar, vector.y * scalar);
+    }
+
+    static transform(vector, transform) {
+
+        const rotationInRadians = MathLib.degreesToRadians(transform.rotation);
+
+
+        return new Vector2(
+            Math.cos(rotationInRadians) * vector.x - Math.sin(rotationInRadians) * vector.y + transform.position.x,
+            Math.sin(rotationInRadians) * vector.x + Math.cos(rotationInRadians) * vector.y + transform.position.y
+        );
     }
 
     static get Left() {
