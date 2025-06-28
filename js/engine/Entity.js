@@ -15,6 +15,10 @@ export class Entity {
         }
         this.transform.update(this.rigidbody);
 
+        if (this.rigidbody && this.rigidbody.collider) {
+            this.rigidbody.collider.getBounds(); // Ensure collider is updated after transform
+        }
+
         ctx.save();
         ctx.translate(this.transform.position.x, this.transform.position.y);
         

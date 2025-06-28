@@ -35,7 +35,11 @@ class Input {
     }
 
     getKeyUp(key) {
-        return this.keysUp.has(key);
+        if (this.keysUp.has(key)) {
+            this.keysUp.delete(key); // Clear the key immediately after checking
+            return true;
+        }
+        return false;
     }
 
     lateUpdate() {

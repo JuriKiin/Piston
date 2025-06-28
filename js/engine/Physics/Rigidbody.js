@@ -16,9 +16,14 @@ export class Rigidbody {
 
     update() {
         if (this.velocity instanceof Vector2) {
-            if (this.useGravity) this.velocity.y -= this.gravity;
+            if (this.useGravity) {
+                this.velocity.y -= this.gravity * Constants.DELTA_TIME;
+            }
 
-            this.velocity.multiply(new Vector2(1 - this.physicsMaterial.friction, 1));
+            this.velocity = this.velocity.multiply(new Vector2(1 - this.physicsMaterial.friction, 1));
+        }
+        if (this.collider && this.collider.enabled) {
+            this.collider.getBounds();
         }
     }
 

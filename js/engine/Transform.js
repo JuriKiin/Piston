@@ -14,8 +14,7 @@ export class Transform {
         if (!(rigidbody instanceof Rigidbody)) return;
         if (!(this.position instanceof Vector2)) return;
 
-        this.position.x += rigidbody.velocity.x * Constants.DELTA_TIME;
-        this.position.y += rigidbody.velocity.y * Constants.DELTA_TIME;
+        this.position = this.position.add(rigidbody.velocity);
     }
 
     setBounds(bounds) {
@@ -41,5 +40,19 @@ export class Transform {
     move(vec) {
         this.position.x += vec.x;
         this.position.y += vec.y;
+    }
+
+    /**
+     * Translates the position of the transform based on a direction and speed.
+     * @param {Vector2} direction - The direction to move in.
+     * @param {number} speed - The speed of movement.
+     */
+    translate(direction, speed) {
+        if (!(direction instanceof Vector2)) {
+            console.error("translate expects a Vector2 instance for direction");
+            return;
+        }
+        const movement = direction.normalize().scale(speed * Constants.DELTA_TIME);
+        this.position = this.position.add(movement);
     }
 }

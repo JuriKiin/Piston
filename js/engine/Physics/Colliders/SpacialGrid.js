@@ -82,6 +82,7 @@ export class SpatialGrid {
                 }
             }
         }
+
         return Array.from(nearby);
     }
 

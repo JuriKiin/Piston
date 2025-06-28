@@ -1,16 +1,16 @@
 import { Entity } from "../engine/Entity.js";
 import { CircleCollider } from "../engine/Physics/Colliders/CircleCollider.js";
 import { PolygonCollider } from "../engine/Physics/Colliders/PolygonCollider.js";
-import { PhysicsMaterial } from "../engine/Physics/PhysicsMaterial.js";
 import { Rigidbody } from "../engine/Physics/Rigidbody.js";
 import { Vector2 } from "../engine/Physics/Vector2.js";
+import Constants from "../engine/static/Constants.js";
 import Input from "../engine/static/Input.js";
 
 export class Player extends Entity {
     constructor() {
         super();
         this.tag = 'Player';
-        this.speed = 300;
+        this.speed = 500;
         this.color = '#333';
     }
 
@@ -22,7 +22,6 @@ export class Player extends Entity {
         rb.mass = 1;
         rb.useGravity = false;
         rb.collider = new PolygonCollider(this, 4, this.transform.size.x, this.transform.size.y);
-        rb.physicsMaterial = PhysicsMaterial.Frictionless;
         rb.isStatic = true;
 
         this.rigidbody = rb;
@@ -31,6 +30,7 @@ export class Player extends Entity {
             if (other.entity.tag === 'Gruff') { this.color = '#ba3e0d'; }
         });
         this.rigidbody.collider.onCollisionExit = ((other) => {
+            console.log("Exit");
             if (other.entity.tag === 'Gruff') { this.color = '#333'; }
         });
     }
@@ -60,7 +60,7 @@ export class Player extends Entity {
         }
 
         if (moveDirection.magnitude() > 0) {
-            this.rigidbody.velocity = moveDirection.normalize().scale(this.speed);
+            this.rigidbody.velocity = moveDirection.normalize().scale(this.speed * Constants.DELTA_TIME);
         } else {
             this.rigidbody.velocity = new Vector2(0, 0);
         }

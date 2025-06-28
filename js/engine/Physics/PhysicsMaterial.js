@@ -7,14 +7,14 @@ export class PhysicsMaterial {
     }
 
     static get Default() {
-        return new PhysicsMaterial(0.1, 0);
+        return new PhysicsMaterial(0.1, 0.2);
     }
 
     static get Bouncy() {
-        return new PhysicsMaterial(0.1, 0.8);
+        return new PhysicsMaterial(0.1, 0.6);
     }
-
+    
     static get Frictionless() {
-        return new PhysicsMaterial(0, 0);
+        return new PhysicsMaterial(0.2, 0.2);
     }
 }

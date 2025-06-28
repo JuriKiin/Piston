@@ -35,8 +35,17 @@ export class Vector2 {
         return this.x * otherVector.x + this.y * otherVector.y;
     }
 
+    cross(otherVector) {
+        // In 2D, the cross product is a scalar representing the magnitude of the perpendicular vector
+        return this.x * otherVector.y - this.y * otherVector.x;
+    }
+
     magnitude() {
         return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    magnitudeSq() {
+        return this.x * this.x + this.y * this.y;
     }
 
     normalize() {

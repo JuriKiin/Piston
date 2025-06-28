@@ -80,18 +80,28 @@ export class PolygonCollider extends Collider {
     //The vertices of both this + other colliders MUST be transformed into world space (i.e accounting for rotation and translation)
     //Separating Axis Theorem (SAT) for polygon vs polygon collision
     polygonCollision(other) {
+
+        let normal = Vector2.Zero;
+        let depth = Infinity;
+
         for (let i = 0; i < this.transformVertices.length; i++) {
             const v1 = this.transformVertices[i].clone();
             const v2 = this.transformVertices[(i + 1) % this.transformVertices.length].clone();
 
             const edge = v2.subtract(v1);
-            const axis = new Vector2(-edge.y, edge.x).normalize();
+            const axis = new Vector2(-edge.y, edge.x).normalize(); // Normalize axis before projection
 
             const projectionA = this.#projectVertices(axis, this.transformVertices);
             const projectionB = this.#projectVertices(axis, other.transformVertices);
 
             if (projectionA.min >= projectionB.max || projectionB.min >= projectionA.max) {
-                return false; // Separating axis found, no collision
+                return undefined;
+            }
+
+            const tempDepth = Math.min(projectionB.max - projectionA.min, projectionA.max - projectionB.min);
+            if (tempDepth < depth) {
+                depth = tempDepth;
+                normal = axis;
             }
         }
         for (let i = 0; i < other.transformVertices.length; i++) {
@@ -99,16 +109,40 @@ export class PolygonCollider extends Collider {
             const v2 = other.transformVertices[(i + 1) % other.transformVertices.length].clone();
 
             const edge = v2.subtract(v1);
-            const axis = new Vector2(-edge.y, edge.x).normalize();
+            const axis = new Vector2(-edge.y, edge.x).normalize(); // Normalize axis before projection
 
             const projectionA = this.#projectVertices(axis, this.transformVertices);
             const projectionB = this.#projectVertices(axis, other.transformVertices);
 
             if (projectionA.min >= projectionB.max || projectionB.min >= projectionA.max) {
-                return false; // Separating axis found, no collision
+                return undefined;
+            }
+
+            const tempDepth = Math.min(projectionB.max - projectionA.min, projectionA.max - projectionB.min);
+            if (tempDepth < depth) {
+                depth = tempDepth;
+                normal = axis;
             }
         }
-        return true;
+
+        const centerA = this.entity.transform.position;
+        const centerB = other.entity.transform.position;
+        const ab = new Vector2(centerB.x - centerA.x, centerB.y - centerA.y);
+
+        // Flip the normal if the dot product is positive
+        if (ab.dot(normal) > 0) {
+            normal.x = -normal.x;
+            normal.y = -normal.y;
+        }
+
+        // Calculate the contact point as the midpoint of the closest edge
+        const contactPoint = centerA.clone().add(centerB).scale(0.5);
+
+        return {
+            normal,
+            depth,
+            contactPoint
+        }
     }
 
     #projectVertices(axis, vertices) {
@@ -153,6 +187,15 @@ export class PolygonCollider extends Collider {
             normal: smallestAxis
         };
     }
+
+    onCollisionEnter(otherCollider) {
+        //These can be defined by the Entity. Do nothing by default
+    }
+
+    onCollisionExit(otherCollider) {
+        //These can be defined by the Entity. Do nothing by default
+    }
+
 
     // Visual debug: draw OBB corners and collision normal if ctx is provided
     drawCollider(ctx, color = 'red') {
@@ -246,12 +289,5 @@ export class PolygonCollider extends Collider {
         return { min, max };
     }
 
-    onCollisionEnter(otherCollider) {
-        //These can be defined by the Entity. Do nothing by default
-    }
-
-    onCollisionExit(otherCollider) {
-        //These can be defined by the Entity. Do nothing by default
-    }
 
 }
