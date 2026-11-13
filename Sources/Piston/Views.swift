@@ -144,6 +144,7 @@ struct LeftPanel: View {
                 PaneHeader(title: "Project", count: nil, icon: "folder", collapsed: $projectCollapsed) { EmptyView() }
             } content: { ExplorerView(model: model) }
         }
+        .underToolbarPadding()
         .panelBar()
     }
 
@@ -793,4 +794,62 @@ struct HierarchyRowView: View {
             Button("Delete", role: .destructive) { model.deleteEntity(e.key) }
         }
     }
+}
+
+
+// MARK: Toolbar overlap
+
+/// The window's toolbar floats over the top of full-height side panels, hiding their first rows (the Scenes header and the first scene,
+/// for example). This measures how far the view's top edge sits above the window's content area and pads by exactly that much: nothing
+/// where the system already insets the view, the toolbar's height where it doesn't.
+private struct TopOverlapReader: NSViewRepresentable {
+    @Binding var overlap: CGFloat
+
+    func makeNSView(context: Context) -> Reader { Reader(binding: $overlap) }
+    func updateNSView(_ view: Reader, context: Context) { view.binding = $overlap }
+
+    /// Measures once when it joins a window and again when the window is resized. (Never from layout(): measuring there made
+    /// SwiftUI and AppKit re-layout each other in a loop.)
+    final class Reader: NSView {
+        var binding: Binding<CGFloat>
+        private var pending = false
+        private var observer: NSObjectProtocol?
+        init(binding: Binding<CGFloat>) { self.binding = binding; super.init(frame: .zero) }
+        required init?(coder: NSCoder) { fatalError() }
+        deinit { if let observer { NotificationCenter.default.removeObserver(observer) } }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let observer { NotificationCenter.default.removeObserver(observer); self.observer = nil }
+            guard let window else { return }
+            observer = NotificationCenter.default.addObserver(forName: NSWindow.didResizeNotification, object: window, queue: .main) { [weak self] _ in self?.scheduleMeasure() }
+            scheduleMeasure()
+        }
+
+        private func scheduleMeasure() {
+            guard !pending else { return }
+            pending = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in self?.measure() }
+        }
+
+        private func measure() {
+            pending = false
+            guard let window else { return }
+            let top = convert(bounds, to: nil).maxY
+            let value = max(0, (top - window.contentLayoutRect.maxY).rounded())
+            if abs(value - binding.wrappedValue) > 0.5 { binding.wrappedValue = value }
+        }
+    }
+}
+
+private struct UnderToolbarPadding: ViewModifier {
+    @State private var overlap: CGFloat = 0
+    func body(content: Content) -> some View {
+        content.padding(.top, overlap).background(TopOverlapReader(overlap: $overlap))
+    }
+}
+
+extension View {
+    /// Keeps a full-height side panel's content clear of the window toolbar.
+    func underToolbarPadding() -> some View { modifier(UnderToolbarPadding()) }
 }

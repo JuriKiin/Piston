@@ -27,6 +27,7 @@ struct InspectorView: View {
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .underToolbarPadding()
         .background(Color(nsColor: .windowBackgroundColor))
         .alert("Save as Prefab", isPresented: $showSavePrefab) {
             TextField("Name", text: $savePrefabName)

@@ -1,3 +1,4 @@
+import SwiftUI
 import AppKit
 import Foundation
 import CoreGraphics
@@ -243,6 +244,23 @@ enum SelfTest {
               "before \(info ?? [:]), after \(moved ?? [:])", needsDisplay: true)   // the sink animation and celebration need frames to run
         model.stopGame()
 
+
+        // Debug aid: PISTON_SHOT=<dir> renders the left panel and the whole project view to PNGs there (to look at layout without a person).
+        if let dir = ProcessInfo.processInfo.environment["PISTON_SHOT"] {
+            let size = NSSize(width: 1500, height: 900)
+            let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.titled, .fullSizeContentView], backing: .buffered, defer: false)
+            window.titlebarAppearsTransparent = true
+            let host = NSHostingView(rootView: ProjectView(model: model).frame(width: size.width, height: size.height))
+            window.contentView = host
+            window.setFrame(NSRect(origin: .zero, size: size), display: true)
+            window.orderBack(nil)
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            host.layoutSubtreeIfNeeded()
+            if let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) {
+                host.cacheDisplay(in: host.bounds, to: rep)
+                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: dir).appendingPathComponent("project-view.png"))
+            }
+        }
 
         // 14. Saving
         model.activeTab = .scene
@@ -544,10 +562,14 @@ enum SelfTest {
                     c.duration = 2
                     c.tracks[0].keys.append(AnimKey(t: 2, v: .num(startX + 100), ease: "linear"))
                 }
-                model.anim.scrub(to: 1)
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                let live = try? await model.host.request("getBounds", ["keys": [target]]) as? [String: Any]
-                let previewX = ((live?["bounds"] as? [[String: Any]])?.first?["world"] as? [String: Any])?["x"] as? NSNumber
+                var previewX: NSNumber?
+                for _ in 0..<20 {
+                    model.anim.scrub(to: 1)
+                    try? await Task.sleep(nanoseconds: 200_000_000)
+                    let live = try? await model.host.request("getBounds", ["keys": [target]]) as? [String: Any]
+                    previewX = ((live?["bounds"] as? [[String: Any]])?.first?["world"] as? [String: Any])?["x"] as? NSNumber
+                    if abs((previewX?.doubleValue ?? -1) - (startX + 50)) < 0.5 { break }
+                }
                 check("animation preview poses the entity without changing the document",
                       abs((previewX?.doubleValue ?? -1) - (startX + 50)) < 0.5 && abs(model.transform(target).x - startX) < 0.001,
                       "preview x \(String(describing: previewX)), doc x \(model.transform(target).x), start \(startX)")
@@ -576,10 +598,14 @@ enum SelfTest {
                             c.tracks[i].keys = [AnimKey(t: 0, v: .color("#000000")), AnimKey(t: 2, v: .color("#ff0000"))]
                         }
                     }
-                    model.anim.scrub(to: 1)
-                    try? await Task.sleep(nanoseconds: 500_000_000)
-                    let live = try? await model.host.request("getEntityData", ["key": target]) as? [String: Any]
-                    let shape = ((live?["components"] as? [[String: Any]])?.first { ($0["type"] as? String) == "ShapeRenderer" })?["fields"] as? [String: Any]
+                    var shape: [String: Any]?
+                    for _ in 0..<20 { // the preview request is asynchronous: give it up to ~4 s on a busy machine
+                        model.anim.scrub(to: 1)
+                        try? await Task.sleep(nanoseconds: 200_000_000)
+                        let live = try? await model.host.request("getEntityData", ["key": target]) as? [String: Any]
+                        shape = ((live?["components"] as? [[String: Any]])?.first { ($0["type"] as? String) == "ShapeRenderer" })?["fields"] as? [String: Any]
+                        if (shape?["color"] as? String) == "#800000" { break }
+                    }
                     check("a color track changes the renderer's color in the Scene view", (shape?["color"] as? String) == "#800000", "color \(String(describing: shape?["color"])), props \(model.anim.properties.map(\.path))")
                     model.anim.endPreview()
                     // The same steps as the UI: + Track, move the playhead, ◇ Key, then edit the key's color.
@@ -602,7 +628,7 @@ enum SelfTest {
                     if let ci = model.components(target).firstIndex(where: { ($0["type"] as? String) == "ShapeRenderer" }) {
                         model.bottomTab = .animation
                         model.anim.recording = true
-                        try? await Task.sleep(nanoseconds: 500_000_000) // the panel appears and resets the playhead; let it settle first
+                        try? await Task.sleep(nanoseconds: 1_200_000_000) // the panel appears and resets the playhead; let it settle first
                         model.anim.scrub(to: 2)
                         model.setComponentField(target, ci, "color", "#00ff00")
                         try? await Task.sleep(nanoseconds: 1_500_000_000)
