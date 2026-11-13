@@ -1,6 +1,7 @@
 import { Entity } from "@piston/Entity.js";
 import { SpriteRenderer } from "@piston/SpriteRenderer.js";
 import Constants from "@piston/static/Constants.js";
+import input from "@piston/static/Input.js";
 import { Rigidbody } from "@piston/Physics/Rigidbody.js";
 import { CircleCollider } from "@piston/Physics/Colliders/CircleCollider.js";
 import { Layers, CollisionMatrix } from "@piston/Physics/CollisionMatrix.js";
@@ -104,15 +105,5 @@ export function setupCollisionMatrix() {
     CollisionMatrix.ignore(L.PlayerProjectile, L.Enemy, false);
 }
 
-/** Edge-triggered key/click presses (the engine's Input only reports held keys, which a quick tap can miss between frames). */
-export const Taps = {
-    set: new Set(), installed: false,
-    install() {
-        if (this.installed) return; this.installed = true;
-        window.addEventListener('keydown', (e) => { if (!e.repeat) this.set.add(e.code); });
-        window.addEventListener('mousedown', () => this.set.add('Click'));
-    },
-    /** True once per press. */
-    take(...codes) { let hit = false; for (const c of codes) if (this.set.delete(c)) hit = true; return hit; },
-    clear() { this.set.clear(); },
-};
+/** True if any of the keys was pressed this step ('Click' means the left mouse button). Uses the engine's input edges, so a quick tap is never missed. */
+export const pressed = (...codes) => codes.some(c => (c === 'Click' ? input.wasMousePressed(0) : input.wasPressed(c)));

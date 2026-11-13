@@ -43,7 +43,7 @@ Every number and colour above is animatable. Limits of the Canvas2D version: col
 A soft round light with **Color**, **Radius** and **Intensity**, centred on its entity (plus an offset). Put one on a bullet, a torch, an explosion or an engine flame. Lights only show once a PostProcess in the scene has a dark **Ambient**; they add up where they overlap. Around 150 lights at once is fine.
 
 ## Time scale
-`Piston.gameLoop.timeScale` multiplies the simulated time of every frame: `0` freezes the game for a few frames (hit-stop), `0.3` is slow motion, `1` is normal. Animators, particles, trails and anything that reads `Constants.DELTA_TIME` follow it. Rigidbody velocities are per frame and are not scaled. A scene load resets it to 1.
+`Piston.gameLoop.timeScale` multiplies the simulated time of every fixed step (see [Simulation, input and the entity pipeline](doc:17-simulation-and-pipeline)): `0` freezes the game for a few frames (hit-stop), `0.3` is slow motion, `1` is normal. Animators, particles, trails and anything that reads `Constants.DELTA_TIME` follow it. Rigidbody velocities are per step and are not scaled. A scene load resets it to 1.
 
 ```js
 const loop = window.Piston.gameLoop;
