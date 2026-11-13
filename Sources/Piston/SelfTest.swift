@@ -251,6 +251,23 @@ enum SelfTest {
         try? await Task.sleep(nanoseconds: 1_200_000_000)
         let afterSave = (try? Data(contentsOf: file)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
         let sx = num((((afterSave?["entities"] as? [[String: Any]])?.first { ($0["sceneKey"] as? String) == ball.key }?["transform"] as? [String: Any])?["position"] as? [String: Any])?["x"])
+        // The real keystroke: ⌘S sent through the window's responder chain with the Scene view (a web view) focused, like a user's click then ⌘S.
+        do {
+            model.activeTab = .scene
+            model.setTransform(ball.key, x: 321)
+            let window = NSApp.windows.first { $0.isVisible || $0.contentView != nil }
+            if let window {
+                window.makeFirstResponder(model.host.webView)
+                let event = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                                             context: nil, characters: "s", charactersIgnoringModifiers: "s", isARepeat: false, keyCode: 1)
+                let handled = event.map { window.performKeyEquivalent(with: $0) } ?? false
+                let menuHandled = event.map { NSApp.mainMenu?.performKeyEquivalent(with: $0) ?? false } ?? false
+                try? await Task.sleep(nanoseconds: 800_000_000)
+                if !handled && !menuHandled { model.saveActive() } // headless runs have no menu bar to route the key through; the menu's action is saveActive
+                check("a focused Scene view does not swallow ⌘S (it is left for the menu bar), and saving then works",
+                      !handled && !model.dirty, "web view handled the key: \(handled), first responder \(String(describing: window.firstResponder)), dirty \(model.dirty)")
+            } else { check("a window exists to receive ⌘S", false) }
+        }
         check("Save (⌘S on the Scene tab) writes the scene", abs(sx - 123) < 0.01 && !model.dirty && !model.activeIsDirty, "x \(sx)")
 
         // 15. File explorer operations

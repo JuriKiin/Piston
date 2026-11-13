@@ -213,7 +213,7 @@ struct DocWebView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(onLink: onLink) }
 
     func makeNSView(context: Context) -> WKWebView {
-        let web = WKWebView(frame: .zero)
+        let web = MenuFriendlyWebView(frame: .zero)
         web.navigationDelegate = context.coordinator
         web.setValue(false, forKey: "drawsBackground")
         return web

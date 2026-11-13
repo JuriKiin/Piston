@@ -12,6 +12,16 @@ enum BridgeError: LocalizedError {
     }
 }
 
+/// A web view that never swallows ⌘ shortcuts. A plain WKWebView answers "handled" to every ⌘-key it receives (it hands the key to the page),
+/// so with the Scene or Game view focused, ⌘S, ⌘Z, ⌘D, ⌘B and the rest never reached the app's menus: Save did nothing. Returning false here
+/// lets the menu bar have them (Copy and friends still reach the web view through the responder chain).
+final class MenuFriendlyWebView: WKWebView {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.contains(.command) { return false }
+        return super.performKeyEquivalent(with: event)
+    }
+}
+
 /// Owns the Edit-view `WKWebView` and the editor ⟷ runtime message bridge.
 ///  - runtime → editor: `window.webkit.messageHandlers.piston.postMessage(…)`
 ///  - editor → runtime: `window.__pistonReceive({id, type, …})`, answered with `{replyTo: id, ok, result|error}`
@@ -28,7 +38,7 @@ final class WebHost: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         let config = WKWebViewConfiguration()
         let controller = WKUserContentController()
         config.userContentController = controller
-        webView = WKWebView(frame: .zero, configuration: config)
+        webView = MenuFriendlyWebView(frame: .zero, configuration: config)
         super.init()
         controller.add(WeakHandler(self), name: "piston")
         webView.navigationDelegate = self
