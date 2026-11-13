@@ -1,6 +1,6 @@
 # Neon Warden: progress
 
-Branch `showcase/neon-warden`, worktree `/Users/jurikiin/Documents/GitHub/Piston-showcase`. Nothing was pushed. The main checkout was not touched.
+Branch `showcase/neon-warden`, worktree `<your checkout>`. Nothing was pushed. The main checkout was not touched.
 
 ## What exists
 | Area | State |
@@ -34,7 +34,7 @@ Branch `showcase/neon-warden`, worktree `/Users/jurikiin/Documents/GitHub/Piston
 
 ## Run it
 ```bash
-cd /Users/jurikiin/Documents/GitHub/Piston-showcase
+cd <your checkout>
 ./bundle.sh                                              # about a minute; already built in this worktree
 ./Piston.app/Contents/MacOS/Piston --build Samples/NeonWarden
 ./Piston.app/Contents/MacOS/Piston --serve Samples/NeonWarden/dist/web   # prints http://127.0.0.1:PORT/ ; open it in a browser

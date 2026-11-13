@@ -11,10 +11,11 @@ Geometry lives in MARK below (100 x 100 units). The SwiftUI PistonMark (Sources/
 splash (Engine/web/static/splash.js) repeat the same numbers, so change all three together.
 """
 import os, subprocess, shutil, sys
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import ImageChops, Image, ImageDraw, ImageFilter
 
 BRAND = (0xFF, 0x5A, 0x1F)      # Piston orange  #FF5A1F
 INK = (0x0E, 0x10, 0x14)        # splash / dark background
+TILE_TOP, TILE_BOTTOM = (0x23, 0x27, 0x30), (0x0B, 0x0D, 0x11)   # the app icon tile
 WHITE = (255, 255, 255)
 
 # name: (x0, y0, x1, y1, radius, only-bottom-corners-rounded)
@@ -71,7 +72,7 @@ def mark_png(size, color):
 
 
 def icon_png(size):
-    """The macOS app icon: a brand-coloured rounded tile (824/1024 of the canvas, like Apple's grid) with the mark in white."""
+    """The macOS app icon: a dark rounded tile (824/1024 of the canvas, like Apple's grid) with the mark in brand orange and a soft warm glow."""
     S = 1024
     tile = (100, 100, 924, 924)
     canvas = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -82,11 +83,19 @@ def icon_png(size):
     tmask = Image.new("L", (S * ss, S * ss), 0)
     ImageDraw.Draw(tmask).rounded_rectangle([v * ss for v in tile], radius=188 * ss, fill=255)
     tmask = tmask.resize((S, S), Image.LANCZOS)
-    t = Image.new("RGBA", (S, S), BRAND + (255,))
+    # dark tile: a faint top-to-bottom gradient so it does not read as a flat black square
+    t = Image.new("RGBA", (S, S), TILE_BOTTOM + (255,))
+    top = Image.new("RGBA", (S, S), TILE_TOP + (255,))
+    t = Image.composite(top, t, Image.linear_gradient("L").rotate(180).resize((S, S)))
     t.putalpha(tmask)
     canvas = Image.alpha_composite(canvas, t)
-    glyph = Image.new("RGBA", (S, S), WHITE + (0,))
-    glyph.putalpha(draw_mark_mask(S, (300, 215, 724, 809)))
+    mask = draw_mark_mask(S, (300, 215, 724, 809))
+    glow = Image.new("RGBA", (S, S), BRAND + (0,))
+    glow.putalpha(mask.filter(ImageFilter.GaussianBlur(46)).point(lambda v: int(v * 0.55)))
+    glow.putalpha(ImageChops.darker(glow.getchannel("A"), tmask))
+    canvas = Image.alpha_composite(canvas, glow)
+    glyph = Image.new("RGBA", (S, S), BRAND + (0,))
+    glyph.putalpha(mask)
     canvas = Image.alpha_composite(canvas, glyph)
     return canvas if size == S else canvas.resize((size, size), Image.LANCZOS)
 
@@ -101,9 +110,9 @@ def main():
         mark_png(512, col).save(os.path.join(br, f"piston-mark-{name}.png"))
     with open(os.path.join(br, "piston-icon.svg"), "w") as f:
         f.write('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">'
-                f'<rect x="100" y="100" width="824" height="824" rx="188" fill="{hexs(BRAND)}"/>'
+                f'<rect x="100" y="100" width="824" height="824" rx="188" fill="{hexs(INK)}"/>'
                 f'<svg x="300" y="215" width="424" height="594" viewBox="{MARK_BOX[0]} {MARK_BOX[1]} {MARK_BOX[2] - MARK_BOX[0]} {MARK_BOX[3] - MARK_BOX[1]}">'
-                f'{mark_svg_body("#FFFFFF")}</svg></svg>\n')
+                f'{mark_svg_body(hexs(BRAND))}</svg></svg>\n')
 
     iconset = os.path.join(RES, "Piston.iconset")
     shutil.rmtree(iconset, ignore_errors=True)
