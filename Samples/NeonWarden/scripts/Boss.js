@@ -12,6 +12,10 @@ import { Fx, FxSprite } from "./Fx.js";
 import { sfx } from "./Sfx.js";
 
 const SEGMENTS = 10, SPACING = 98;
+// Pattern tuning (see docs/showcase/neon-warden/BALANCE.md): one segment fires a ring per volley, telegraphed; live orbs are capped per phase.
+const TELEGRAPH = 0.9, FAN_WINDUP = 0.55;
+const VOLLEY_GAP = [2.2, 1.7, 1.35], VOLLEY_SIZE = [1, 2, 2], ORB_CAP = [32, 44, 56];
+const FAN_GAP = [3.2, 2.7, 2.3], FAN_ORBS = [3, 4, 5], FAN_SPEED = [240, 270, 300], RING_GAP = [0, 9, 8];
 
 /** An expanding shockwave ring that hurts the player unless they dash through it (dash = invulnerable). */
 export class ShockRing extends Actor {
@@ -78,7 +82,7 @@ export class Laser extends Actor {
 export class BossSegment extends Enemy {
     constructor(boss, index, tail = false) {
         super(); this.tag = tail ? 'WardenTail' : 'WardenSegment'; this.order = 22 - index * 0.01; this.boss = boss; this.index = index; this.tail = tail;
-        this.hp = tail ? 8 : 5; this.maxHp = this.hp; this.heading = 0; this.fireT = rand(3, 7) + index * 0.3; this.windup = 0; this.contactDamage = 1; this.score = 250; this.px = CX; this.py = CY;
+        this.hp = tail ? 12 : 8; this.maxHp = this.hp; this.heading = 0; this.charge = 0; this.windup = 0; this.contactDamage = 1; this.score = 250; this.px = CX; this.py = CY;
     }
     start() {
         this.transform.position = new Vector2(this.px, this.py); this.transform.size = new Vector2(128, 128);
@@ -94,16 +98,20 @@ export class BossSegment extends Enemy {
         super.update();
         const dt = Constants.DELTA_TIME;
         if (this.boss.state === 'enter' || Game.state !== 'boss') return;
-        this.fireT -= dt;
-        if (this.fireT < 1.0 && this.fireT > 0) { this.windup = 1 - this.fireT; this.flash(Math.max(this.hitFlash, 0.25 + 0.25 * Math.sin(this.fireT * 45))); this.light.intensity = 1.0; }
-        else this.light.intensity = 0.55 + (this.hp <= 2 ? 0.3 : 0);
-        if (this.fireT <= 0) { this.fire(); this.fireT = rand(4.5, 7.5) / this.boss.aggression; }
+        // The Warden picks which segment fires (see Warden.volley); this one telegraphs for TELEGRAPH seconds (pulsing, brightening) and then fires one ring.
+        if (this.charge > 0) {
+            this.charge -= dt; this.windup = 1 - this.charge / TELEGRAPH;
+            this.flash(Math.max(this.hitFlash, 0.25 + 0.25 * Math.sin(this.charge * 45))); this.light.intensity = 1.0;
+            if (this.charge <= 0) { this.windup = 0; this.fire(); }
+        } else this.light.intensity = 0.55 + (this.hp <= 2 ? 0.3 : 0);
         if (!this.tail && this.hp <= 2 && this.main.currentFrame !== 1) this.main.currentFrame = 1;
         if (this.tail && this.hp <= 4) this.main.fps = 14;
     }
+    /** Starts the telegraph; the ring fires when it ends. */
+    beginVolley() { if (this.charge <= 0 && !this.dying) { this.charge = TELEGRAPH; sfx.play('charge', { volume: 0.35, minGap: 0.2, pitch: 1.4 }); } }
     fire() {
-        const p = this.transform.position, n = this.boss.phase >= 2 ? 8 : 6, a0 = rand(0, 6.28);
-        for (let i = 0; i < n; i++) Orb.spawn(p.x, p.y, a0 + i * Math.PI * 2 / n, { speed: 250 });
+        const p = this.transform.position, n = [7, 8, 9][this.boss.phase - 1], a0 = rand(0, 6.28), speed = [150, 170, 195][this.boss.phase - 1];
+        for (let i = 0; i < n; i++) Orb.spawn(p.x, p.y, a0 + i * Math.PI * 2 / n, { speed });
         Fx.sprite({ x: p.x, y: p.y, w: 120, sheet: 'spark_amb.png', frames: 6, fw: 128, fh: 128, cols: 6, fps: 36, order: 66 });
         sfx.play('turret_shot', { volume: 0.35, minGap: 0.12, pitch: 1.3 });
     }
@@ -123,8 +131,8 @@ export class BossSegment extends Enemy {
 export class Warden extends Enemy {
     static description = 'The boss: a segmented serpent. Break its segments to wear it down, then destroy the head.';
     constructor() {
-        super(); this.tag = 'Warden'; this.order = 24; this.hp = 60; this.maxHp = 60; this.state = 'enter'; this.t = 0; this.u = 0; this.heading = 0; this.phase = 1;
-        this.segments = []; this.attackT = 3; this.ringT = 7; this.laserT = 9; this.snarl = 0; this.aggression = 1; this.score = 5000; this.contactDamage = 1;
+        super(); this.tag = 'Warden'; this.order = 24; this.hp = 150; this.maxHp = 150; this.state = 'enter'; this.t = 0; this.u = 0; this.heading = 0; this.phase = 1;
+        this.segments = []; this.attackT = 4; this.ringT = 9; this.laserT = 11; this.volleyT = 3.5; this.fanWindup = 0; this.snarl = 0; this.aggression = 1; this.score = 5000; this.contactDamage = 1;
     }
     start() {
         this.transform.position = new Vector2(CX, CY); this.transform.size = new Vector2(10, 10);
@@ -139,7 +147,7 @@ export class Warden extends Enemy {
         // The body is an engine RopeChain: head pinned (the figure-eight path moves it), links only pull when stretched, so the chain starts stacked on the head and unfurls as it moves away.
         this.chain = this.addComponent(new RopeChain({ segmentLength: SPACING, rope: true, iterations: 8, pinFirst: true, stiffness: 1 }));
         this.chain.setLinks([this, ...this.segments]);
-        Game.enemies.add(this); Game.boss = this;
+        Game.enemies.add(this); Game.boss = this; Orb.cap = ORB_CAP[0];
         sfx.play('roar', { minGap: 0 }); Game.shake(0.9);
         Fx.ring(CX, CY, { color: 'amb', from: 40, to: 900, time: 1.0 }); Fx.ring(CX, CY, { color: 'mag', from: 20, to: 600, time: 0.8 });
     }
@@ -182,11 +190,20 @@ export class Warden extends Enemy {
         this.orientChain();
         this.light.intensity = 0.8 + 0.3 * Math.sin(performance.now() / 200) + (this.snarl > 0 ? 0.8 : 0);
         if (this.state !== 'fight' || !pl || pl.dead || Game.state !== 'boss') return;
-        // attacks
-        this.attackT -= dt; this.ringT -= dt; this.laserT -= dt;
-        if (this.attackT <= 0) { this.fan(); this.attackT = rand(2.0, 2.8) / this.aggression; }
-        if (this.phase >= 2 && this.ringT <= 0) { this.ring(); this.ringT = rand(6, 8) / this.aggression; }
-        if (this.phase >= 3 && this.laserT <= 0 && !(this.laser && !this.laser.destroyed)) { this.laser = Game.spawn(new Laser(this, Math.random() < 0.5 ? 1 : -1)); this.laserT = rand(9, 12); }
+        // attacks: every pattern is telegraphed, and the number of live orbs is capped per phase so there is always room to move
+        Orb.cap = ORB_CAP[this.phase - 1];
+        const ph = this.phase - 1;
+        this.volleyT -= dt; this.attackT -= dt; this.ringT -= dt; this.laserT -= dt;
+        if (this.volleyT <= 0) { this.volley(VOLLEY_SIZE[ph]); this.volleyT = VOLLEY_GAP[ph] * rand(0.9, 1.15); }
+        if (this.fanWindup > 0) { this.fanWindup -= dt; this.flash(Math.max(this.hitFlash, 0.3 + 0.3 * Math.sin(this.fanWindup * 40))); if (this.fanWindup <= 0) this.fan(); }
+        else if (this.attackT <= 0) { this.fanWindup = FAN_WINDUP; this.snarl = FAN_WINDUP; this.updateFrame(); this.attackT = FAN_GAP[ph] * rand(0.9, 1.2); }
+        if (this.phase >= 2 && this.ringT <= 0) { this.ring(); this.ringT = rand(8, 10); }
+        if (this.phase >= 3 && this.laserT <= 0 && !(this.laser && !this.laser.destroyed)) { this.laser = Game.spawn(new Laser(this, Math.random() < 0.5 ? 1 : -1)); this.laserT = rand(10, 13); }
+    }
+    /** Picks `count` idle segments to telegraph and fire a ring. */
+    volley(count) {
+        const idle = this.alive.filter(s => s.charge <= 0);
+        for (let i = 0; i < count && idle.length; i++) idle.splice(Math.floor(Math.random() * idle.length), 1)[0].beginVolley();
     }
     /** The RopeChain moves the segments (see start); this just turns each one to face the link ahead of it. */
     orientChain() {
@@ -198,9 +215,9 @@ export class Warden extends Enemy {
         }
     }
     fan() {
-        const p = this.transform.position, pl = Game.player, a = angleTo(p, pl.position), n = this.phase === 1 ? 5 : 7, spread = 0.9;
-        this.snarl = 0.45; this.updateFrame();
-        for (let i = 0; i < n; i++) Orb.spawn(p.x + Math.cos(this.heading) * 90, p.y + Math.sin(this.heading) * 90, a - spread / 2 + spread * i / (n - 1), { speed: 360, big: i === (n >> 1), amber: false });
+        const p = this.transform.position, pl = Game.player, a = angleTo(p, pl.position), ph = this.phase - 1, n = FAN_ORBS[ph], spread = 0.35 * (n - 1);
+        this.snarl = 0.3; this.updateFrame();
+        for (let i = 0; i < n; i++) Orb.spawn(p.x + Math.cos(this.heading) * 90, p.y + Math.sin(this.heading) * 90, a - spread / 2 + spread * i / (n - 1), { speed: FAN_SPEED[ph], big: i === (n >> 1), amber: false });
         sfx.play('turret_shot', { volume: 0.6, minGap: 0.1, pitch: 0.7 }); Game.shake(0.2);
         Fx.sprite({ x: p.x + Math.cos(this.heading) * 90, y: p.y + Math.sin(this.heading) * 90, w: 190, sheet: 'spark_amb.png', frames: 6, fw: 128, fh: 128, cols: 6, fps: 34, order: 66, light: { color: '#ff2e88', radius: 300, intensity: 1.4 } });
     }
@@ -211,6 +228,7 @@ export class Warden extends Enemy {
     }
     die() {
         if (this.dying) return; this.dying = true; Game.boss = null;
+        Orb.cap = Infinity;
         Game.director?.onBossDead(this);
         this.destroy();
     }

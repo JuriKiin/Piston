@@ -146,7 +146,7 @@ export class Turret extends Enemy {
             if (this.t > 1.1) this.fireFan();
         } else if (this.state === 'fire') {
             this.main.currentFrame = this.t < 0.12 ? 5 : 0; this.charge = 0;
-            if (this.t > 0.6) { this.state = 'idle'; this.t = 0; this.cd = rand(1.0, 2.0); }
+            if (this.t > 0.6) { this.state = 'idle'; this.t = 0; this.cd = rand(1.6, 2.8); }
         }
         const charging = this.state === 'charge';
         this.aimBeam.length = 120 + 560 * this.charge; this.aimBeam.opacity = charging ? 0.35 + 0.5 * this.charge : 0;
@@ -154,7 +154,7 @@ export class Turret extends Enemy {
     fireFan() {
         this.state = 'fire'; this.t = 0;
         const p = this.transform.position, c = Math.cos(this.aim), s = Math.sin(this.aim), mx = p.x + c * 56, my = p.y + s * 56;
-        for (const off of [-0.28, 0, 0.28]) Orb.spawn(mx, my, this.aim + off, { speed: 340, amber: true });
+        for (const off of [-0.28, 0, 0.28]) Orb.spawn(mx, my, this.aim + off, { speed: 250, amber: true });
         Fx.sprite({ x: mx, y: my, w: 140, sheet: 'spark_amb.png', frames: 6, fw: 128, fh: 128, cols: 6, fps: 40, order: 66, light: { color: '#ffb02e', radius: 240, intensity: 1.4 } });
         sfx.play('turret_shot', { volume: 0.7, minGap: 0.1 }); Game.shake(0.12);
         this.transform.position.x -= c * 8; this.transform.position.y -= s * 8; this.px = this.transform.position.x; this.py = this.transform.position.y;

@@ -64,7 +64,10 @@ export class Orb extends Actor {
         }
     }
     static pools = new Map();
+    static cap = Infinity; // most orbs alive at once; spawn() returns null beyond it (set per boss phase so a fight always leaves room to move)
+    static get live() { let n = 0; for (const p of Orb.pools.values()) n += p.liveCount; return n; }
     static spawn(x, y, angle, { speed = 330, big = false, amber = false } = {}) {
+        if (Orb.live >= Orb.cap) return null;
         const key = `${big}|${amber}`;
         let pool = Orb.pools.get(key);
         if (!pool) Orb.pools.set(key, pool = new EntityPool({ create: () => new Orb(0, 0, 0, { big, amber }), onAcquire: (o, ...a) => o.launch(...a) }));
