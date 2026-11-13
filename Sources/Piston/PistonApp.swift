@@ -161,6 +161,11 @@ struct PistonApp: App {
             await withCheckedContinuation { (_: CheckedContinuation<Void, Never>) in }
         }
 
+        if let dir = ProcessInfo.processInfo.environment["PISTON_BRAND_SHOT"] {
+            await BrandShots.run(model: model, dir: dir)
+            exit(0)
+        }
+
         if args.contains("--selftest") {
             // Work on a throwaway copy of the sample so the test can edit files freely.
             let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("piston-selftest-\(UUID().uuidString)")
