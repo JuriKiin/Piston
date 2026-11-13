@@ -18,7 +18,7 @@ Branch `showcase/neon-warden`, worktree `/Users/jurikiin/Documents/GitHub/Piston
 * The game builds (`--build`, 159 files, 9.9 MB) and runs in the Browser pane (Chromium 152, Metal GPU), with no console errors. Played and checked by simulating input events from JavaScript (key/mouse events on `window`) and reading `window.NeonWarden` state:
   * title -> click -> arena; intro message; wave 1 drones spawn, chase, telegraph, dive; bolts kill them and score/combo count up.
   * wave 2: four turrets rise, track, charge (aim line), fire amber fans. (Jumped to with `NeonWarden.director.enter('wave2'); .spawnTurrets()`.)
-  * boss: spawns with shockwave rings, chain unfurls, fan attacks, shockwave rings at 66 %, laser at 33 % ("ENRAGED" shown; the laser beam itself I did not capture on screen), segments break (HP bar chip animation), head dies -> chain explosion, slow-mo, flash, "WARDEN DOWN" with results.
+  * boss: spawns with shockwave rings, chain unfurls, fan attacks, shockwave rings at 66 %, laser at 33 % ("ENRAGED"; the laser beam is captured in `shots/boss-laser-phase3.jpg`), segments break (HP bar chip animation), head dies -> chain explosion, slow-mo, flash, "WARDEN DOWN" with results.
   * lose: five hits -> explosion, "SYSTEM FAILURE", R restarts the scene (state back to `intro`, HP 5).
   * Game was driven with a bot that aims perfectly, so **balance is untested by a human**; the boss died in about 15 s of perfect aim with the player invulnerable.
 * Performance (see BENCHMARKS.md): 60 fps held with 530 orbs + explosions; 1,000 stationary orbs 6.1 ms; the engine breaks 60 fps at about 2,000 entities.
@@ -26,7 +26,7 @@ Branch `showcase/neon-warden`, worktree `/Users/jurikiin/Documents/GitHub/Piston
 ## Not verified / known gaps in the slice
 * **No human playtest. Audio was synthesised but never listened to** (no ears here): levels, loop seams and the quality of the music are assumed, not checked. The code ran without audio errors.
 * Not opened in the editor GUI (Inspector, Animation panel, Scene view with PostProcess). The `--selftest` editor checks passed with the new engine, the scenes use only registered components, and the editor shares the same loop, but I did not look.
-* The Warden laser beam, the turret aim-line draw path and some phase transitions were exercised in code paths but I only have screenshots of the earlier phases.
+* Laser damage and dodge feel were not tested by a human.
 * Retina/4K sharpness was not inspected on a 4K display; sprites are authored at 2x display size.
 * Sprite art is good but not hand-polished: the Warden head reads a bit like a fish; baked lighting rotates with the sprite (no normal maps), sprite shadows are blobs.
 * Lights cast no shadows; bloom is 8-bit (no HDR).
