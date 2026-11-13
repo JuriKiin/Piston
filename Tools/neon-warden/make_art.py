@@ -180,7 +180,7 @@ def orb_frame(i, S, col, col_w, col_d, n=4):
     cv = Cv(S, S); cx = cy = S / 2
     pulse = 0.5 + 0.5 * math.sin(i / n * 2 * math.pi)
     r = S * (0.22 + 0.025 * pulse)
-    cv.glow(cv.circle_mask(cx, cy, r * 1.3), col, S * 0.16, 0.9)
+    cv.glow(cv.circle_mask(cx, cy, r * 1.15), col, S * 0.075, 0.95)
     cv.paint(cv.circle_mask(cx, cy, r * 1.12), col_d)
     sph = cv.circle_mask(cx, cy, r)
     cv.gradient_fill(sph, col, col_d, 60)
@@ -196,17 +196,17 @@ def make_orbs():
     save_sheet([orb_frame(i, 192, MAG, MAG_W, MAG_D) for i in range(4)], 'bigorb.png')
 
 def make_bolt():
-    W, H = 160, 48
+    W, H = 160, 64; cy = 32
     cv = Cv(W, H)
-    # tail fades toward -x; head bright at the right
-    tail = cv.poly_mask([(10, 24), (120, 19), (150, 24), (120, 29)]).filter(ImageFilter.GaussianBlur(2.2 * cv.ss))
-    cv.glow(tail, CYAN, 9, 1.0)
+    # tail fades toward -x; head bright at the right. Glow radii are kept small so nothing is clipped by the sprite bounds.
+    tail = cv.poly_mask([(10, cy), (120, cy - 5), (150, cy), (120, cy + 5)]).filter(ImageFilter.GaussianBlur(2.2 * cv.ss))
+    cv.glow(tail, CYAN, 6, 1.0)
     grad = grad_img(cv.size, (51, 230, 255, 0), (51, 230, 255, 255), 0)
     cv.paint(tail, grad)
-    core = cv.poly_mask([(40, 24), (126, 21.2), (148, 24), (126, 26.8)]).filter(ImageFilter.GaussianBlur(0.8 * cv.ss))
+    core = cv.poly_mask([(40, cy), (126, cy - 2.8), (148, cy), (126, cy + 2.8)]).filter(ImageFilter.GaussianBlur(0.8 * cv.ss))
     cv.paint(core, grad_img(cv.size, (216, 251, 255, 0), (255, 255, 255, 255), 0))
-    head = cv.circle_mask(140, 24, 6.5)
-    cv.emissive(head, CYAN_W, 9, 0.9, WHITE)
+    head = cv.circle_mask(140, cy, 6.5)
+    cv.emissive(head, CYAN_W, 7, 0.9, WHITE)
     cv.save('bolt.png')
 
 # =========================================================================================== glows (256), rings (512), beams, aim

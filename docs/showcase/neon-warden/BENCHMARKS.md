@@ -77,3 +77,25 @@ over ~10k draw calls on weak GPUs). Sketch of how it plugs in without breaking e
 * `GameLoop` picks the renderer from `project.piston.json` (`"renderer": "canvas2d" | "webgl2" | "auto"`), and the post-process stack (`PostProcess`, `Light2D`) is written against
   the `Renderer` interface so the same components get real shaders on WebGL2 and the cheap Canvas2D approximation otherwise.
 * Prerequisite: the texture atlas / image pool (gap list), since batching needs few textures.
+
+## In-game stress test (the real game, real engine)
+
+Measured in the built Neon Warden (boss phase, player invulnerable, 1920x1080 canvas in a 1280x720 pane, M4 Pro), by wrapping `gameLoop.update` with a timer
+(script time for simulation + issuing all draw calls; GPU time hides behind vsync) and sampling `requestAnimationFrame` intervals. Every orb is a full entity: sprite sheet
+renderer + `Light2D` + circle trigger collider, all drawn through the bloom + lighting pipeline.
+
+| Stationary orbs on screen | Entities | `update()` ms (avg / p95) | rAF interval ms | Verdict |
+|---|---|---|---|---|
+| ~50 (normal play) | ~100 | under 1 | 16.7 | |
+| 500 | 539 | 3.2 / 3.5 | 16.7 | holds 60 fps |
+| 1,000 | 1,043 | 6.1 / 6.4 | 16.7 | holds 60 fps |
+| 2,000 | 2,047 | 17.2 / 18.2 | 17.5 | **breaks 60 fps** (this is the engine's per-entity ceiling) |
+| 3,000 | 3,047 | 45.9 / 67.3 | 46 | ~22 fps |
+| 4,500 | 4,547 | 115 / 152 | 115 | slideshow: cost is super-linear (collision narrowphase on a dense cloud) |
+
+Also measured during a burst-spawn stress (16 orbs every 120 ms moving outward, plus an explosion every 0.5 s with textured additive sparks, smoke and debris):
+530 orbs, 602 entities, 1,189 components, 371 particles alive: `update()` 3.3 ms avg / 4.1 p95, rAF 16.68 ms avg, p95 18.5 ms. 60 fps held.
+
+Conclusions: the engine's per-entity cost is about 6 us (1,000 entities = 6 ms) and grows super-linearly past ~1,500 entities, so **about 1,500 simultaneous entities is the real
+ceiling for a 60 fps game today** (the draw calls themselves are cheap; the cost is entity update/render bookkeeping and the collision pass). The game uses about 100-250
+entities in normal play, i.e. 10-15 % of that. The bloom + lightmap pipeline costs well under 1 ms of script time and was not visible as a GPU cost at 60 Hz on this machine.

@@ -15,7 +15,7 @@ export class Bolt extends Actor {
     start() {
         this.transform.position = new Vector2(this.px, this.py);
         this.transform.rotation = this.angle * 180 / Math.PI;
-        this.transform.size = new Vector2(84, 25);
+        this.transform.size = new Vector2(84, 34);
         this.main = this.addComponent(mkSprite('bolt.png', { order: 4, blend: 'additive' }));
         this.main.anchorX = 0.85;
         this.addComponent(new TrailRenderer({ lifetime: 0.12, minDistance: 8, startWidth: 7, endWidth: 0, startColor: '#bff6ff', endColor: '#33e6ff', blendMode: 'additive', sortingOrder: 3 }));

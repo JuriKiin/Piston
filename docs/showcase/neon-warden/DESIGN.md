@@ -138,4 +138,12 @@ Effort: S = under a day, M = a few days, L = a week or more. Priority: P0 blocks
 | 18 | Entity render loop allocates per frame | filter+sort per frame, per-entity component copy | cached sorted lists, dirty flags | M | P1 | Measured, documented |
 | 19 | Sprite tint / colour multiply | team colours, damage colours | `SpriteRenderer.tint` | S | P1 | Use baked variants |
 | 20 | Audio: music layering, looping with loop points, bus ducking, reverb | boss music switch, ducking | `audio.crossfade`, `setBusDuck` | S-M | P1 | Game-side |
+| 22 | Entities spawned from `start()` are silently lost (the scene loader replaces the entity list after instantiation) | the Director had to move its setup into its first `update()` | `onSceneReady()` hook, or make `GameLoop.add` safe during load | S | P0 | Game-side workaround |
+| 23 | Input reports held keys only; a fast tap between frames is missed; no gamepad | restart/confirm keys | `input.wasPressed/wasReleased` edges, gamepad axes | S | P1 | Game-side `Taps` helper |
+| 24 | `Debug.showColliders` defaults to true, so a built game draws collider outlines | looked like green debug rings on every body | default false outside the editor | S | P0 | Game turns it off |
+| 25 | No per-entity enable/visible flag; destroyed entities are swept only at frame start | pooling, hiding | `entity.active` honoured by update/render/collide | S | P1 | Not built |
+| 26 | Text has no outline/shadow/glow, bold, or letter spacing; fonts beyond generics need Google Fonts or a bundled file | HUD and titles that match the neon look | `Text.stroke`, `Text.shadow`, `Text.glow` | M | P1 | Logo baked into a PNG |
+| 27 | Particles: one texture per emitter, no sprite-sheet frames, no sub-emitters, no per-particle trails, no colour-over-life curve beyond two colours | richer explosions | `ParticleEmitter.frames`, `.trail`, gradients | M | P2 | Several emitters per effect |
+| 28 | Camera has no rotation, no built-in shake/trauma, no bounds/deadzone/multi-target | game-feel | `Camera.rotation`, shake as a generic offset layer | S | P2 | Game-side |
+| 29 | Rigidbody friction/velocity are per frame (see 8); `Entity.update` always runs `rigidbody.update` even for kinematic movers | wasted work for hundreds of script-moved bodies | `rigidbody.kinematic` | S | P1 | Game moves bodies itself |
 | 21 | Editor: no way to author Light2D/PostProcess gizmos or preview lights in Scene view | | Scene view renders post stack | M | P2 | Works for free (same loop), untested in editor |
