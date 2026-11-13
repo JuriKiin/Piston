@@ -69,6 +69,12 @@ await test('GameLoop: stepOnce advances exactly one step even when paused or tim
     loop.playState = 'playing'; loop.lastTime = 6000; loop.update(6000 + 1000 / 60); assert.equal(m.updates, 2); // resume: one step, no catch-up burst
     loop.timeScale = 0; loop.playState = 'paused'; loop.stepOnce(); assert.equal(m.updates, 3);
 });
+await test('GameLoop: when steps are expensive, catch-up is limited so heavy scenes slow down instead of spiralling', () => {
+    const m = new Mover(); const loop = makeLoop(() => [m]); loop.stepCostMs = 16; // each step takes as long as a step is
+    loop.update(1000 + 1000 / 15); assert.equal(m.updates, 1); // a 66 ms frame owes 4 steps but only 1 may run
+    const cheap = new Mover(); const l2 = makeLoop(() => [cheap]); l2.stepCostMs = 1;
+    l2.update(1000 + 1000 / 15); assert.equal(cheap.updates, 4); // cheap steps catch up fully
+});
 await test('GameLoop: a 100 ms stall runs a bounded number of steps', () => {
     const m = new Mover(); const loop = makeLoop(() => [m]);
     loop.update(1100); assert.ok(m.updates >= 1 && m.updates <= 5, String(m.updates));

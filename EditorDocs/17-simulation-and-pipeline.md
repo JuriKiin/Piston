@@ -39,3 +39,27 @@ input.wasMouseReleased(0);
 ```
 
 `InputController.wasActionPressed('fire')` does the same for a named action. With a fixed step, a press that arrives while two steps run in one frame is seen by the first step only, so an action never fires twice.
+
+Catch-up after a hitch is limited by cost: the loop allows as many extra steps as fit in one step's length of real time (at most 5). A very heavy scene therefore slows down rather than spiralling into ever longer frames.
+
+## Active flag
+`entity.active = false` switches an entity off without removing it: no `update()`, no drawing, no collisions (it is also left out of the spatial grid), and `lifetime` stops counting. Set it back to `true` to resume. It is not saved in scene files, and Stop restores whatever it was when you pressed Play.
+
+## EntityPool
+Bullets, sparks and damage numbers appear and disappear constantly; building each one (components, collider) and throwing it away makes garbage. An **EntityPool** builds each entity once and recycles it.
+
+```js
+import { EntityPool } from '@piston/EntityPool.js';
+
+const bullets = new EntityPool({
+    create: () => new Bullet(),                              // neutral entity; the pool calls start() and adds it to the scene
+    onAcquire: (b, x, y, angle) => b.launch(x, y, angle),    // runs on EVERY use, new or recycled
+    onRelease: (b) => {},                                    // optional
+    prewarm: 20, max: 200,                                   // optional
+});
+const b = bullets.acquire(x, y, angle);   // null when `max` are live
+b.destroy();                              // for a pooled entity this returns it to the pool (so does running out of `lifetime`)
+```
+Rules: put all per-use setup in `onAcquire` (position, velocity, lifetime, `trail.clear()`), never rely on the constructor; a pool belongs to one scene and forgets its entities when the scene is rebuilt; an entity returned during a collision pass is skipped for the rest of that step, but a callback already running can still see it, so check `other.active` if it matters. `pool.dispose()` really destroys everything.
+
+Measured on Neon Warden (see `docs/showcase/neon-warden/ENGINE-ROUND-1.md`): the pool removes per-shot construction cost and allocation; the per-entity update cost is unchanged, and a switched-off entity costs a flag check per frame.

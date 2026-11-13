@@ -101,7 +101,7 @@ export class BossSegment extends Enemy {
     }
     fire() {
         const p = this.transform.position, n = this.boss.phase >= 2 ? 8 : 6, a0 = rand(0, 6.28);
-        for (let i = 0; i < n; i++) Game.spawn(new Orb(p.x, p.y, a0 + i * Math.PI * 2 / n, { speed: 250 }));
+        for (let i = 0; i < n; i++) Orb.spawn(p.x, p.y, a0 + i * Math.PI * 2 / n, { speed: 250 });
         Fx.sprite({ x: p.x, y: p.y, w: 120, sheet: 'spark_amb.png', frames: 6, fw: 128, fh: 128, cols: 6, fps: 36, order: 66 });
         sfx.play('turret_shot', { volume: 0.35, minGap: 0.12, pitch: 1.3 });
     }
@@ -208,7 +208,7 @@ export class Warden extends Enemy {
     fan() {
         const p = this.transform.position, pl = Game.player, a = angleTo(p, pl.position), n = this.phase === 1 ? 5 : 7, spread = 0.9;
         this.snarl = 0.45; this.updateFrame();
-        for (let i = 0; i < n; i++) Game.spawn(new Orb(p.x + Math.cos(this.heading) * 90, p.y + Math.sin(this.heading) * 90, a - spread / 2 + spread * i / (n - 1), { speed: 360, big: i === (n >> 1), amber: false }));
+        for (let i = 0; i < n; i++) Orb.spawn(p.x + Math.cos(this.heading) * 90, p.y + Math.sin(this.heading) * 90, a - spread / 2 + spread * i / (n - 1), { speed: 360, big: i === (n >> 1), amber: false });
         sfx.play('turret_shot', { volume: 0.6, minGap: 0.1, pitch: 0.7 }); Game.shake(0.2);
         Fx.sprite({ x: p.x + Math.cos(this.heading) * 90, y: p.y + Math.sin(this.heading) * 90, w: 190, sheet: 'spark_amb.png', frames: 6, fw: 128, fh: 128, cols: 6, fps: 34, order: 66, light: { color: '#ff2e88', radius: 300, intensity: 1.4 } });
     }

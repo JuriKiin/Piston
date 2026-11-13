@@ -106,7 +106,7 @@ export class Player extends Actor {
         this.fireCd = 1 / 12; this.barrel *= -1;
         const c = Math.cos(this.aim), s = Math.sin(this.aim), p = this.position, ox = 24, oy = 12 * this.barrel;
         const x = p.x + c * ox - s * oy, y = p.y + s * ox + c * oy, a = this.aim + (Math.random() - 0.5) * 0.045;
-        Game.spawn(new Bolt(x, y, a));
+        Bolt.spawn(x, y, a);
         Fx.muzzle(x, y, a * 180 / Math.PI);
         sfx.play(`shot${1 + ((Math.random() * 3) | 0)}`, { volume: 0.5, minGap: 0.045, jitter: 0.1 });
         this.vx -= c * 12; this.vy -= s * 12; // tiny recoil

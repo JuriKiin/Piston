@@ -82,6 +82,9 @@ export default class GameLoop {
         // Rendering still happens once per display frame. `simSteps` counts the steps run while Playing (the editor's Step button advances it by exactly one).
         this.stepper = new FixedStep({ hz: options.fixedHz ?? 60 });
         this.simSteps = 0;
+        this.stepCostMs = 0; // smoothed wall-clock cost of one simulation step; limits catch-up (see update())
+        // Bumped whenever the entity list is rebuilt wholesale (scene load, Stop's restore): anything holding entities across that (EntityPool) must forget them.
+        this.generation = 0;
 
         this.playState = PlayState.Edit;
         this._editSnapshot = null;
@@ -115,7 +118,7 @@ export default class GameLoop {
      */
     get camera() {
         for (const entity of this.entities) {
-            if (entity.destroyed) continue;
+            if (entity.destroyed || entity.active === false) continue;
             const camera = entity.getComponent(Camera);
             if (camera) return camera;
         }
@@ -131,7 +134,7 @@ export default class GameLoop {
      */
     get input() {
         for (const entity of this.entities) {
-            if (entity.destroyed) continue;
+            if (entity.destroyed || entity.active === false) continue;
             const controller = entity.getComponent(InputController);
             if (controller) return controller;
         }
@@ -195,6 +198,7 @@ export default class GameLoop {
         setLastSceneId(scene.id); // so a page refresh resumes here instead of main.js's hardcoded default
         this.stepper.reset();
         this.entities = [];
+        this.generation++;
         this.playState = PlayState.Edit;
         this._editSnapshot = null;
         this.deletedSceneKeys = new Set();
@@ -264,11 +268,13 @@ export default class GameLoop {
             throw e;
         }
         this.entities = built.concat(spawned.filter(e => !built.includes(e)));
+        this.generation++;
         return this.entities;
     }
 
     #instantiateScene() {
         this.entities = this.scene.instantiate(this.canvas);
+        this.generation++;
         // Assigned once, right here, rather than recomputed from array position later - that stays
         // correct even after entities are deleted or reordered, since it's fixed at creation time.
         const tagCounts = new Map();
@@ -592,6 +598,7 @@ export default class GameLoop {
             return entity;
         });
         this.deletedSceneKeys = new Set(snapshot.deletedSceneKeys);
+        this.generation++;
     }
 
     /** Simulation steps per second. Setting it changes the step length (`fixedDelta`); every `Constants.DELTA_TIME` the game reads is one step. Default 60. */
@@ -613,7 +620,7 @@ export default class GameLoop {
             }
             this.entities = this.entities.filter(e => !e.destroyed);
         }
-        this.activeColliders = this.entities.filter(e => e.rigidbody && e.rigidbody.collider && e.rigidbody.collider.enabled);
+        this.activeColliders = this.entities.filter(e => e.active !== false && e.rigidbody && e.rigidbody.collider && e.rigidbody.collider.enabled);
     }
 
     /** One fixed simulation step: update every entity, resolve collisions, settle rest state. `DELTA_TIME` is the step length times `timeScale`. */
@@ -626,7 +633,7 @@ export default class GameLoop {
         }
 
         for (const entity of this.entities) {
-            if (entity instanceof Entity) {
+            if (entity instanceof Entity && entity.active !== false) {
                 entity.update();
             }
         }
@@ -634,11 +641,19 @@ export default class GameLoop {
         this.physicsEngine.handleCollisions(this.activeColliders);
 
         for (const entity of this.entities) {
-            entity.rigidbody?.updateRestState();
+            if (entity.active !== false) entity.rigidbody?.updateRestState();
         }
 
         this.simSteps++;
         input.endStep();
+    }
+
+    /** #simulate() timed, feeding `stepCostMs` (a smoothed average). */
+    #timedSimulate() {
+        const t0 = performance.now();
+        this.#simulate();
+        const cost = performance.now() - t0;
+        this.stepCostMs = this.stepCostMs === 0 ? cost : this.stepCostMs * 0.8 + cost * 0.2;
     }
 
     /**
@@ -664,9 +679,12 @@ export default class GameLoop {
         Constants.DELTA_TIME = isPlaying ? this.fixedDelta * Math.max(0, this.timeScale) : 0;
 
         if (isPlaying) {
+            // Catching up after a hitch is only worth it while steps are cheap: allow as many extra steps as fit in one step's length of wall-clock time.
+            // When a single step costs as much as the step itself (a very heavy scene), the game slows down instead of spiralling into longer and longer frames.
+            this.stepper.maxSteps = Math.max(1, Math.min(5, Math.floor(this.fixedDelta * 1000 / Math.max(0.01, this.stepCostMs))));
             const steps = this.stepper.advance(rawDeltaTime);
             if (steps === 0) this.#sweep(false);
-            for (let i = 0; i < steps; i++) this.#simulate();
+            for (let i = 0; i < steps; i++) this.#timedSimulate();
             Constants.DELTA_TIME = this.fixedDelta * Math.max(0, this.timeScale);
         } else {
             // Frozen in Edit/Paused so a scene can be positioned before Play. Presses made while frozen must not fire on the first step after resuming.
@@ -695,8 +713,8 @@ export default class GameLoop {
         // component actually controls what's drawn in front of what - Array.sort is stable, so
         // entities that tie keep their existing relative order instead of jittering between frames.
         const byOrder = (a, b) => a.getSortingOrder() - b.getSortingOrder();
-        const worldEntities = this.entities.filter(e => e instanceof Entity && (e.space ?? 'World') === 'World').sort(byOrder);
-        const screenEntities = this.entities.filter(e => e instanceof Entity && e.space === 'Screen').sort(byOrder);
+        const worldEntities = this.entities.filter(e => e instanceof Entity && e.active !== false && (e.space ?? 'World') === 'World').sort(byOrder);
+        const screenEntities = this.entities.filter(e => e instanceof Entity && e.active !== false && e.space === 'Screen').sort(byOrder);
 
         const post = this.#activePostProcess();
         if (post) {

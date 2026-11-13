@@ -19,6 +19,9 @@ export class Entity {
         // null = "no name of its own yet" - see the `name` getter/setter below.
         this._name = null;
         this.destroyed = false;
+        // false = switched off: skipped by update, drawing and collision (and the spatial grid) until set true again, without being removed from the scene.
+        // Cheaper than destroying and recreating for things that come and go constantly; see EntityPool. Not saved in scene files.
+        this.active = true;
         this.lifetime = null; // seconds; if set, the entity auto-destroys when it reaches 0
         this.components = [];
         // Grouping only - NOT a transform hierarchy. transform.position stays plain world-space on
@@ -84,6 +87,8 @@ export class Entity {
      */
     destroy() {
         if (this.destroyed) return;
+        // An entity that came from an EntityPool is recycled instead of removed: switched off and handed back for the next acquire().
+        if (this._pool) { this._pool.release(this); return; }
         this.destroyed = true;
         for (const child of [...this.children]) child.setParent(null);
         this.setParent(null);
@@ -137,6 +142,7 @@ export class Entity {
      * Playing state - frozen in Edit/Paused so the scene can be positioned before pressing Play.
      */
     update() {
+        if (!this.active) return;
         if (this.lifetime !== null) {
             this.lifetime -= Constants.DELTA_TIME;
             if (this.lifetime <= 0) {
@@ -160,6 +166,7 @@ export class Entity {
      * (collider bounds) and visuals stay in sync with the transform even while paused/editing.
      */
     render(ctx) {
+        if (!this.active) return;
         if (this.rigidbody && this.rigidbody.collider) {
             this.rigidbody.collider.getBounds();
         }
@@ -195,6 +202,7 @@ export class Entity {
             position: this.transform.position.clone(),
             rotation: this.transform.rotation,
             size: this.transform.size.clone(),
+            active: this.active,
             // Direct object references, not ids - captureEditState/restoreEditState only ever
             // operate on live entities within one session (never serialized - see SceneIO.js for
             // the save-file equivalent), so there's no lookup step needed the way loading a level
@@ -227,6 +235,7 @@ export class Entity {
         this.transform.position = state.position.clone();
         this.transform.rotation = state.rotation;
         this.transform.size = state.size.clone();
+        if (state.active !== undefined) this.active = state.active;
         this.parent = state.parent;
         this.children = [...state.children];
 
