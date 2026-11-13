@@ -1,13 +1,13 @@
 // Run: node Engine/web/tests/splash.test.mjs   (no browser needed)
-// The "Made with Piston" splash that Release builds inline into index.html (Templates/export/web/splash.html), and the Player hook that waits for it.
+// The "Made with Piston" splash compiled into every Release bundle (Engine/web/MadeWithPiston.js), and the Player hook that waits for it.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { loadLoopHarness } from './_harness.mjs';
 
 let passed = 0; const test = async (n, f) => { await f(); passed++; console.log('PASS', n); };
-const html = fs.readFileSync(fileURLToPath(new URL('../../../Templates/export/web/splash.html', import.meta.url)), 'utf8');
-const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const srcPath = fileURLToPath(new URL('../MadeWithPiston.js', import.meta.url));
+const src = fs.readFileSync(srcPath, 'utf8');
 
 /** Runs the splash script against a stub page; returns handles to drive its clock and inspect what it did to the DOM. */
 function boot({ reduced = false } = {}) {
@@ -16,15 +16,19 @@ function boot({ reduced = false } = {}) {
     els['pstn-splash'].parentNode = { removeChild() { els.removed = true; } };
     const listeners = {}; let raf = null;
     const window = { innerHeight: 800, matchMedia: () => ({ matches: reduced }), addEventListener(t, f) { listeners[t] = f; }, removeEventListener() {}, requestAnimationFrame(f) { raf = f; } };
-    new Function('window', 'document', script)(window, { getElementById: id => els[id] });
-    let settled = false; window.__PISTON_SPLASH__.then(() => { settled = true; });
+    const document = { head: { appendChild() {} }, body: { insertAdjacentHTML() {} }, getElementById: id => els[id], createElement: () => ({}) };
+    // Evaluate the module's code against the stub page (no browser needed).
+    const code = src.replace(/export function /g, 'function ') + '\nreturn madeWithPiston;';
+    const g = {}; const promise = new Function('window', 'document', 'globalThis', code)(window, document, g)();
+    window.__PISTON_SPLASH__ = promise;
+    let settled = false; promise.then(() => { settled = true; });
     return { els, window, listeners, isDone: async () => { await Promise.resolve(); await Promise.resolve(); return settled; }, step: ms => { const f = raf; raf = null; f?.(ms); } };
 }
 
-await test('the splash is an inline fragment: one script, no external requests', () => {
-    assert.ok(html.includes('id="pstn-splash"') && html.includes('MADE WITH') && html.includes('>Piston<'));
-    assert.ok(!/(src|href)=["']https?:/.test(html) && !/<script[^>]+src=/.test(html) && !/url\(/.test(html));
-    assert.ok(html.length < 8000, `splash is ${html.length} bytes`);
+await test('the splash is self-contained module code: no external requests, small', () => {
+    assert.ok(src.includes('id="pstn-splash"') && src.includes('MADE WITH') && src.includes('>Piston<'));
+    assert.ok(!/(src|href)=["']https?:/.test(src) && !/<script/.test(src) && !/url\(/.test(src));
+    assert.ok(src.length < 9000, `splash is ${src.length} bytes`);
 });
 await test('it plays for about two seconds, pushes the lockup to the centre, then resolves and removes itself', async () => {
     const s = boot();
@@ -73,6 +77,16 @@ await test('Player.startGame loads the scene, then waits for the splash before r
     release(); await started;
     assert.ok(loop && loop.playState !== undefined);
     delete globalThis.__PISTON_SPLASH__;
+});
+await test('a release without the splash refuses to start', async () => {
+    const { Scene, makeCanvas } = await loadLoopHarness();
+    const { SceneRegistry } = await import('../SceneRegistry.js');
+    const { startGame } = await import('../Player.js');
+    SceneRegistry.register(new Scene({ id: 'nosplash', name: 'n', create: () => [] }));
+    globalThis.__PISTON_PROJECT__ = { release: true }; delete globalThis.__PISTON_SPLASH__;
+    const canvas = Object.assign(makeCanvas(), { style: {}, clientWidth: 100, clientHeight: 100 });
+    await assert.rejects(() => startGame({ canvas, startScene: 'nosplash' }), /Made with Piston/);
+    delete globalThis.__PISTON_PROJECT__;
 });
 console.log(`${passed} splash tests passed`);
 process.exit(0);

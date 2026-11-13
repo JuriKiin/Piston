@@ -292,10 +292,6 @@ final class BuildSystem: @unchecked Sendable {
 
     /// The "Made with Piston" splash that every Release build starts with (Templates/export/web/splash.html, inlined into the page so the single-bundle
     /// release stays one script plus index.html). Development builds do not show it.
-    private func madeWithPistonSplash() -> String {
-        (try? String(contentsOf: templatesRoot.appendingPathComponent("export/web/splash.html"), encoding: .utf8)) ?? ""
-    }
-
     private func jsArray(_ items: [String]) -> String { "[" + items.map { jsString($0) }.joined(separator: ", ") + "]" }
 
     private func jsString(_ s: String) -> String {
@@ -330,7 +326,7 @@ final class BuildSystem: @unchecked Sendable {
         try main.write(to: out.appendingPathComponent("main.js"), atomically: true, encoding: .utf8)
 
         let head = "<script type=\"importmap\">{\"imports\": {\"@piston/\": \"./engine/\"}}</script>"
-        try template(["TITLE": title, "HEAD": head, "ENTRY": "./main.js", "SPLASH": ""])
+        try template(["TITLE": title, "HEAD": head, "ENTRY": "./main.js"])
             .write(to: out.appendingPathComponent("index.html"), atomically: true, encoding: .utf8)
         try writeManifest(into: out, mode: .development, start: v.start)
     }
@@ -382,10 +378,12 @@ final class BuildSystem: @unchecked Sendable {
         try ("export default " + String(decoding: dataJSON, as: UTF8.self) + ";\n").write(to: work.appendingPathComponent("data.js"), atomically: true, encoding: .utf8)
 
         func copied(_ url: URL) -> String { projectCopy.appendingPathComponent(rel(url)).path }
-        var main = "import { startGame } from '@piston/Player.js';\nimport data from './data.js';\n"
+        var main = "import { startGame } from '@piston/Player.js';\nimport { installMadeWithPiston } from '@piston/MadeWithPiston.js';\nimport data from './data.js';\n"
         main += "import \(jsString(copied(v.entryURL)));\n"
         if let m = v.manifestURL { main += "import \(jsString(copied(m)));\n" }
-        main += "globalThis.__PISTON_PROJECT__ = { scenes: \(jsString("./" + scenesDir)), prefabs: './prefabs', sceneIds: \(jsArray(v.sceneOrder)), resolution: [\(resolution.width), \(resolution.height)] };\n"
+        main += "globalThis.__PISTON_PROJECT__ = { scenes: \(jsString("./" + scenesDir)), prefabs: './prefabs', sceneIds: \(jsArray(v.sceneOrder)), resolution: [\(resolution.width), \(resolution.height)], release: true };\n"
+        // "Made with Piston" is compiled into every Release bundle (and obfuscated with it), and the Player refuses to start a release without it.
+        main += "installMadeWithPiston();\n"
         main += "startGame({ canvas: document.getElementById('game'), startScene: \(jsString(v.start)), data });\n"
         try main.write(to: work.appendingPathComponent("main.js"), atomically: true, encoding: .utf8)
 
@@ -423,7 +421,7 @@ final class BuildSystem: @unchecked Sendable {
         let bundleName = "game.\(hash).js"
         try code.write(to: out.appendingPathComponent(bundleName), atomically: true, encoding: .utf8)
         try copyProjectContent(into: out, only: ["assets"])
-        try template(["TITLE": title, "HEAD": "", "ENTRY": "./\(bundleName)", "SPLASH": madeWithPistonSplash()])
+        try template(["TITLE": title, "HEAD": "", "ENTRY": "./\(bundleName)"])
             .write(to: out.appendingPathComponent("index.html"), atomically: true, encoding: .utf8)
         try writeManifest(into: out, mode: .release, start: v.start)
     }

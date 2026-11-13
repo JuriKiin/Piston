@@ -447,8 +447,8 @@ enum SelfTest {
               && has("assets/flag.svg") && gameFiles.first.map { releaseHTML.contains($0) } == true,
               "\(rel.errors.map(\.text)) files \(gameFiles) html refs bundle \(gameFiles.first.map { releaseHTML.contains($0) } ?? false)")
         check("obfuscation never renames properties (scene data keys must survive)", gameJS.contains("obf:false"))
-        check("Release pages start with the Made with Piston splash (inlined, so the release stays one bundle); Development pages do not, and the Player waits for it",
-              releaseHTML.contains("id=\"pstn-splash\"") && releaseHTML.contains("__PISTON_SPLASH__") && !releaseHTML.contains("{{SPLASH}}")
+        check("Release builds compile the Made with Piston splash into the bundle (not the page); Development pages have none, and the Player waits for it",
+              ((try? String(contentsOf: stubs.appendingPathComponent("main.js"), encoding: .utf8)) ?? "").contains("installMadeWithPiston();") && !releaseHTML.contains("pstn-splash") && !releaseHTML.contains("{{SPLASH}}")
               && !pageHTML.contains("pstn-splash") && !pageHTML.contains("{{SPLASH}}")
               && ((try? String(contentsOf: EditorModel.engineRoot().appendingPathComponent("Player.js"), encoding: .utf8))?.contains("__PISTON_SPLASH__") ?? false))
 
@@ -464,7 +464,8 @@ enum SelfTest {
             check("Release with the real toolchain: bundled, minified and obfuscated, with no readable sources shipped",
                   rr2.ok && realBundle != nil && realSize > 150_000 && rr2.messages.contains { $0.text.hasPrefix("Obfuscated (medium)") }
                   && !FileManager.default.fileExists(atPath: realOut.appendingPathComponent("engine").path)
-                  && !FileManager.default.fileExists(atPath: realOut.appendingPathComponent("scenes").path),
+                  && !FileManager.default.fileExists(atPath: realOut.appendingPathComponent("scenes").path)
+                  && !(((try? String(contentsOf: realOut.appendingPathComponent("index.html"), encoding: .utf8)) ?? "").contains("pstn-splash")),
                   "\(rr2.messages.map(\.text).filter { !$0.contains("isn't imported") }.joined(separator: " | "))")
         }
 
@@ -480,6 +481,22 @@ enum SelfTest {
               model.projectName == "Selftest Game" && model.currentScene == "main" && model.entities.isEmpty
               && created.map { !FileManager.default.fileExists(atPath: $0.appendingPathComponent("engine").path) } == true,
               "name \(model.projectName), scene \(model.currentScene ?? "-"), entities \(model.entities.count)")
+        do {
+            // New Project > Advanced: starting defaults land in the descriptor and the first scene.
+            let tmp = parent.appendingPathComponent("advanced-defaults")
+            try FileManager.default.copyItem(at: EditorModel.templatesRoot().appendingPathComponent("blank"), to: tmp)
+            var o = NewProjectOptions(); o.resolutionIndex = 2; o.postProcess = true
+            try o.apply(to: tmp)
+            let cfg = try JSONSerialization.jsonObject(with: Data(contentsOf: tmp.appendingPathComponent("project.piston.json"))) as? [String: Any]
+            let sc = try JSONSerialization.jsonObject(with: Data(contentsOf: tmp.appendingPathComponent("scenes/main.json"))) as? [String: Any]
+            let ents = sc?["entities"] as? [[String: Any]] ?? []
+            let comps = (ents.first?["components"] as? [[String: Any]])?.compactMap { $0["type"] as? String } ?? []
+            let ppFields = ((ents.first?["components"] as? [[String: Any]])?.last?["fields"] as? [String: Any])?.count ?? -1
+            let res = cfg?["resolution"] as? [String: Any]
+            check("New Project advanced defaults set the size, a MainCamera and a bare PostProcess component",
+                  (res?["width"] as? Int) == 1920 && comps == ["Camera", "PostProcess"] && ppFields == 0,
+                  "res \(String(describing: res)), comps \(comps)")
+        } catch { check("New Project advanced defaults set the size, a MainCamera and a bare PostProcess component", false, "\(error)") }
         check("the project appears in Recent Projects", model.recents.first?.name == "Selftest Game" && model.recents.first?.platform == "web")
         if let created {
             let readyBeforeOrb = model.readyCount
