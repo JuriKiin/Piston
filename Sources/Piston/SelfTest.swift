@@ -924,6 +924,36 @@ enum SelfTest {
         model.closeProject()
         check("Close Project returns to the Hub", model.projectURL == nil && model.recents.count >= 1)
 
+        // The second built-in sample, Neon Warden: it must open from a copy, never carry an engine copy, and boot and run in the game runtime.
+        let nwSource = EditorModel.samplesRoot().appendingPathComponent("NeonWarden")
+        let nwTmp = FileManager.default.temporaryDirectory.appendingPathComponent("piston-selftest-nw-\(UUID().uuidString)")
+        let nwCopied = (try? FileManager.default.copyItem(at: nwSource, to: nwTmp)) != nil
+        check("Neon Warden ships with the app (project file, scenes, scripts, no build output)", nwCopied
+              && FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("project.piston.json").path)
+              && FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("scenes/arena.json").path)
+              && FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("scripts/Director.js").path)
+              && !FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("dist").path))
+        if nwCopied {
+            model.persistRecents = false
+            await model.openProject(nwTmp)
+            let nwReady = await model.waitUntilReady(timeout: 20)
+            check("Neon Warden opens: both scenes are found and the start scene loads", nwReady && model.sceneIDs.contains("title") && model.sceneIDs.contains("arena") && !model.entities.isEmpty,
+                  "scenes \(model.sceneIDs), entities \(model.entities.count)")
+            check("the engine is not copied into the project", !FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("engine").path)
+                  && !FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("GameLoop.js").path))
+            let nwErrorsBefore = model.logs.filter { $0.level == "error" }.count
+            await model.play()
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            let nw = await model.playInfo()
+            // The title director spawns its logo, prompt and dust from start(), so a running game has more live entities than the scene file holds.
+            check("Neon Warden boots in the runtime and its scripts spawn entities from start()", nw?.playState == "playing" && (nw?.frames ?? 0) > 5 && (nw?.entityCount ?? 0) > model.entities.count,
+                  "state \(nw?.playState ?? "?"), frames \(nw?.frames ?? -1), game entities \(nw?.entityCount ?? -1) vs scene \(model.entities.count)", needsDisplay: true)
+            check("Neon Warden raised no runtime errors", model.logs.filter { $0.level == "error" }.count == nwErrorsBefore,
+                  model.logs.filter { $0.level == "error" }.suffix(3).map { $0.text }.joined(separator: " | "))
+            model.stopGame()
+            model.closeProject()
+        }
+
         print(failures == 0 ? "\nALL CHECKS PASSED" : "\n\(failures) CHECK(S) FAILED")
         return failures == 0
     }

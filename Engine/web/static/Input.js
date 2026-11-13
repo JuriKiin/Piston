@@ -104,6 +104,7 @@ class Input {
     getCanvasMousePosition() {
         if (!this.canvas) return this.getMousePosition();
         const rect = this.canvas.getBoundingClientRect();
+        if (!(rect.width > 0) || !(rect.height > 0)) return this.getMousePosition(); // a canvas with no layout box (hidden tab, mid-resize) would give NaN
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         return {

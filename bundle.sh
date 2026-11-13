@@ -17,6 +17,7 @@ cp -R EditorDocs "$RES/EditorDocs"
 cp -R EditorWeb "$RES/EditorWeb"
 cp -R Plugins "$RES/Plugins"
 cp -R Samples "$RES/Samples"
+rm -rf "$RES"/Samples/*/dist   # a sample's local build output (git-ignored) is never shipped or copied into a user's project
 cp Resources/Piston.icns "$RES/Piston.icns"
 # Release-build tools (esbuild binary + obfuscator). The binary must stay executable and signed.
 cp -R Toolchain "$RES/Toolchain"

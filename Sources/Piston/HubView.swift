@@ -40,6 +40,10 @@ struct HubView: View {
             }
             .buttonStyle(.link)
             .padding(.top, 4)
+            Button { Task { await model.openSample("NeonWarden") } } label: {
+                Label("Open Sample: Neon Warden", systemImage: "bolt.fill")
+            }
+            .buttonStyle(.link)
             Spacer()
             Text("Engine \(model.engineVersion) · Web")
                 .font(.caption)
@@ -56,7 +60,7 @@ struct HubView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "tray").font(.system(size: 34)).foregroundStyle(.tertiary)
                     Text("No projects yet").foregroundStyle(.secondary)
-                    Text("Create one, or open the Mini Golf sample to look around.")
+                    Text("Create one, or open the Mini Golf or Neon Warden sample to look around.")
                         .font(.caption).foregroundStyle(.tertiary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

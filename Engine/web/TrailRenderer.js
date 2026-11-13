@@ -80,6 +80,7 @@ export class TrailRenderer extends Component {
             pts.push({ x: l.x, y: l.y, w: this.startWidth + (this.endWidth - this.startWidth) * k });
         }
         if (pts.length < 2) return;
+        if (!pts.every(q => Number.isFinite(q.x) && Number.isFinite(q.y))) return; // a NaN position (bad aim input) must not throw out of the frame loop
         const { left, right } = buildRibbon(pts);
         const a = parseColor(this.startColor) ?? [255, 255, 255, 1], b = parseColor(this.endColor) ?? a;
         const tail = pts[pts.length - 1];

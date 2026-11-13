@@ -72,4 +72,12 @@ await test('InputController.wasActionPressed reads key and mouse tokens', () => 
     assert.ok(c.wasActionPressed('jump')); assert.ok(c.wasActionPressed('fire')); assert.ok(!c.wasActionPressed('missing')); assert.ok(!c.wasActionPressed('none'));
     input.endStep(); assert.ok(!c.wasActionPressed('jump')); fire('keyup', { code: 'Space' }); fire('mouseup', { button: 0 }); input.endStep();
 });
+await test('a canvas with no layout box does not turn the mouse position into NaN', () => {
+    input.setCanvas({ width: 200, height: 100, getBoundingClientRect: () => ({ left: 0, top: 0, width: 0, height: 0 }) }); fire('mousemove', { clientX: 12, clientY: 34 });
+    assert.deepEqual(input.getCanvasMousePosition(), { x: 12, y: 34 });
+});
+await test('a trail with a NaN position draws nothing instead of throwing', async () => {
+    const { TrailRenderer } = await import('../TrailRenderer.js'); const t = new TrailRenderer(); t.entity = { transform: { position: { x: NaN, y: 0 }, rotation: 0, size: { x: 1, y: 1 } } };
+    t.points = [{ x: 1, y: 1, age: 0 }, { x: 2, y: 2, age: 0.1 }]; const ctx = new Proxy({}, { get: (_, k) => (k === 'globalAlpha' ? 1 : () => { throw new Error('drew ' + String(k)); }), set: () => true }); t.draw(ctx);
+});
 console.log(`${passed} passed`);
