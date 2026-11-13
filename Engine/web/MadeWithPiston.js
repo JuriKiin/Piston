@@ -10,7 +10,7 @@ const STYLE = `
   #pstn-splash { position: fixed; inset: 0; z-index: 2147483647; background: #0E1014; overflow: hidden; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
   #pstn-splash > * { position: absolute; left: 50%; top: 0; will-change: transform; }
   #pstn-lock { display: flex; align-items: center; gap: .22em; font-size: clamp(44px, 12vmin, 120px); font-weight: 800; letter-spacing: -.02em; color: #fff; line-height: 1; }
-  #pstn-lock svg { height: .92em; width: auto; display: block; }
+  #pstn-lock svg { height: 1.02em; width: auto; display: block; }
   #pstn-rod { width: 14px; margin-left: -7px; background: #FF5A1F; }
   #pstn-plate { height: 18px; border-radius: 6px; background: #FF5A1F; }
   #pstn-made { font-size: clamp(11px, 2.2vmin, 20px); font-weight: 600; letter-spacing: .42em; color: rgba(255,255,255,.55); opacity: 0; white-space: nowrap; padding-left: .42em; }`;
@@ -18,7 +18,7 @@ const STYLE = `
 const MARKUP = `<div id="pstn-splash" role="presentation" aria-hidden="true">
   <div id="pstn-rod"></div>
   <div id="pstn-plate"></div>
-  <div id="pstn-lock"><svg viewBox="22 12 56 80" fill="#FF5A1F"><path d="M22 38H30V78Q30 84 36 84H64Q70 84 70 78V38H78V79Q78 92 65 92H35Q22 92 22 79Z"/><rect x="34" y="54" width="32" height="16" rx="3"/><rect x="46" y="20" width="8" height="36"/><rect x="38" y="12" width="24" height="9" rx="4.5"/></svg><span>Piston</span></div>
+  <div id="pstn-lock"><svg viewBox="182 167 634 690"><g transform="rotate(38 512 512)"><path fill="#FF5A1F" d="M290 400H350V692A68 68 0 0 0 418 760H606A68 68 0 0 0 674 692V400H734V727A93 93 0 0 1 641 820H383A93 93 0 0 1 290 727Z"/><rect fill="#FF5A1F" x="484" y="150" width="56" height="380"/><rect fill="#FF5A1F" x="392" y="150" width="240" height="80" rx="40"/><rect fill="#FFF4D6" x="392" y="520" width="240" height="120" rx="22"/></g></svg><span>Piston</span></div>
   <div id="pstn-made">MADE WITH</div>
 </div>`;
 

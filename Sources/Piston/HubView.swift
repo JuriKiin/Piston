@@ -31,7 +31,7 @@ struct HubView: View {
             }
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
-                    PistonMark().fill(Brand.orange).frame(width: 22, height: 31)
+                    PistonLogo().frame(width: 36, height: 39)
                     Text("Piston").font(.system(size: 34, weight: .heavy)).tracking(-0.8).foregroundStyle(.white)
                 }
                 Text("Build 2D games and ship them to the web.")

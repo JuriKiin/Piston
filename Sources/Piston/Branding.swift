@@ -34,26 +34,57 @@ struct LicenseSheet: View {
     }
 }
 
-/// The piston glyph: a cylinder open at the top (a U), a head inside it, and a rod with a cap. Fits its rect (aspect 56:80).
+/// The piston mark: a piston tilted 38° clockwise. Geometry is upright in a 1024 frame, rotated about (512, 512) and fitted to the rect;
+/// it matches Tools/branding/make_icon.py (the app icon and exported marks). `PistonMark` is the cylinder, rod and cap (fill it orange);
+/// `PistonHead` is the head inside the cylinder (fill it cream). Both fit the same rect, so stack them: see `PistonLogo`.
+enum PistonGeometry {
+    static let box = CGRect(x: 182, y: 167, width: 634, height: 690)    // bounds of the tilted glyph, 1024 frame
+    static let tilt = Double.pi * 38 / 180
+
+    static func transform(in rect: CGRect) -> CGAffineTransform {
+        let k = min(rect.width / box.width, rect.height / box.height)
+        return CGAffineTransform.identity
+            .translatedBy(x: rect.midX, y: rect.midY)
+            .scaledBy(x: k, y: k)
+            .translatedBy(x: -box.midX, y: -box.midY)
+            .translatedBy(x: 512, y: 512)
+            .rotated(by: tilt)
+            .translatedBy(x: -512, y: -512)
+    }
+}
+
 struct PistonMark: Shape {
     func path(in rect: CGRect) -> Path {
-        let k = min(rect.width / 56, rect.height / 80)
-        let ox = rect.midX - 28 * k, oy = rect.midY - 40 * k
-        func r(_ x0: CGFloat, _ y0: CGFloat, _ x1: CGFloat, _ y1: CGFloat, _ rad: CGFloat) -> Path {
-            Path(roundedRect: CGRect(x: ox + (x0 - 22) * k, y: oy + (y0 - 12) * k, width: (x1 - x0) * k, height: (y1 - y0) * k), cornerRadius: rad * k)
-        }
-        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: ox + (x - 22) * k, y: oy + (y - 12) * k) }
         var p = Path()
-        // U: walls 8 wide, round bottom
-        p.move(to: pt(22, 38)); p.addLine(to: pt(30, 38)); p.addLine(to: pt(30, 78))
-        p.addQuadCurve(to: pt(36, 84), control: pt(30, 84)); p.addLine(to: pt(64, 84))
-        p.addQuadCurve(to: pt(70, 78), control: pt(70, 84)); p.addLine(to: pt(70, 38)); p.addLine(to: pt(78, 38))
-        p.addLine(to: pt(78, 79)); p.addQuadCurve(to: pt(65, 92), control: pt(78, 92)); p.addLine(to: pt(35, 92))
-        p.addQuadCurve(to: pt(22, 79), control: pt(22, 92)); p.closeSubpath()
-        p.addPath(r(34, 54, 66, 70, 3))      // head
-        p.addPath(r(46, 20, 54, 56, 0))      // rod
-        p.addPath(r(38, 12, 62, 21, 4.5))    // cap
-        return p
+        // U: outer 290..734 x 400..820 (bottom corners r93), inner cut 350..674 to 760 (r68), open at the top
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x, y: y) }
+        p.move(to: pt(290, 400)); p.addLine(to: pt(350, 400))
+        p.addArc(tangent1End: pt(350, 760), tangent2End: pt(674, 760), radius: 68)      // inner bottom-left
+        p.addArc(tangent1End: pt(674, 760), tangent2End: pt(674, 400), radius: 68)      // inner bottom-right
+        p.addLine(to: pt(674, 400)); p.addLine(to: pt(734, 400))
+        p.addArc(tangent1End: pt(734, 820), tangent2End: pt(290, 820), radius: 93)      // outer bottom-right
+        p.addArc(tangent1End: pt(290, 820), tangent2End: pt(290, 400), radius: 93)      // outer bottom-left
+        p.closeSubpath()
+        p.addRect(CGRect(x: 484, y: 150, width: 56, height: 380))                                     // rod
+        p.addRoundedRect(in: CGRect(x: 392, y: 150, width: 240, height: 80), cornerSize: CGSize(width: 40, height: 40))   // cap
+        return p.applying(PistonGeometry.transform(in: rect))
+    }
+}
+
+struct PistonHead: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path(roundedRect: CGRect(x: 392, y: 520, width: 240, height: 120), cornerRadius: 22).applying(PistonGeometry.transform(in: rect))
+    }
+}
+
+/// The full mark in brand colours: orange body, cream head.
+struct PistonLogo: View {
+    static let cream = Color(red: 1.0, green: 0xF4 / 255, blue: 0xD6 / 255)    // #FFF4D6
+    var body: some View {
+        ZStack {
+            PistonMark().fill(Brand.orange)
+            PistonHead().fill(Self.cream)
+        }
     }
 }
 
