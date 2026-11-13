@@ -64,7 +64,7 @@ export default class GameLoop {
         audio.installAutoUnlock();
         this.scenes = new SceneManager(this); // scene flow: Piston.scenes.next() / load(id) / restart()
         this.entities = [];
-        this.spatialGrid = new SpatialGrid(canvas.width, canvas.height, 10000, true, this.ctx); // Cell size of 50
+        this.spatialGrid = new SpatialGrid(canvas.width, canvas.height, 128, false, this.ctx); // 128 px cells. Was 10000 (one cell for the whole world = O(n^2) broadphase) with debug-grid drawing always on.
         this.lastTime = null;
         this.physicsEngine = new PhysicsEngine(this.spatialGrid);
 

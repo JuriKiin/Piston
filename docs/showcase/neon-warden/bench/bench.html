@@ -1,0 +1,106 @@
+<!doctype html><meta charset="utf-8"><title>Piston Canvas2D benchmark</title>
+<style>body{margin:0;background:#111;color:#ccc;font:12px monospace}canvas{width:960px;height:540px;display:block}pre{white-space:pre-wrap;margin:4px}</style>
+<canvas id="c" width="1920" height="1080"></canvas><pre id="out">running...</pre>
+<script>
+// Canvas2D micro-benchmarks for the Piston showcase. Every case draws one 1920x1080 frame per rAF tick.
+// We report the achieved rAF interval (what the player feels: includes GPU/compositor work) and the JS-side draw time.
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = 1920, H = 1080;
+const rnd = (() => { let s = 12345; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
+
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+// A 512x512 "sprite sheet" with a shaded, outlined body: stands in for a baked character sprite.
+const sheet = mk(512, 512); { const g = sheet.getContext('2d');
+  for (let i = 0; i < 16; i++) { const x = (i % 4) * 128 + 64, y = Math.floor(i / 4) * 128 + 64;
+    const gr = g.createRadialGradient(x - 16, y - 16, 4, x, y, 56); gr.addColorStop(0, '#fff'); gr.addColorStop(.5, '#4af'); gr.addColorStop(1, '#124');
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, 56, 0, 7); g.fill(); g.strokeStyle = '#0ff'; g.lineWidth = 3; g.stroke(); } }
+// Prebaked glow sprites of several radii
+function glow(r, col) { const c = mk(r * 2, r * 2), g = c.getContext('2d'); const gr = g.createRadialGradient(r, r, 0, r, r, r);
+  gr.addColorStop(0, col + 'ff'); gr.addColorStop(.25, col + '88'); gr.addColorStop(1, col + '00'); g.fillStyle = gr; g.fillRect(0, 0, r * 2, r * 2); return c; }
+const glow16 = glow(16, '#ff8040'), glow64 = glow(64, '#40a0ff'), glow256 = glow(256, '#ff4080');
+const bgc = mk(W, H); { const g = bgc.getContext('2d'); const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#0a1024'); gr.addColorStop(1, '#241038'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  g.strokeStyle = '#ffffff10'; for (let x = 0; x < W; x += 60) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } for (let y = 0; y < H; y += 60) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); } }
+const bg = () => ctx.drawImage(bgc, 0, 0);
+
+// Pre-generated random state
+const MAX = 200000; const P = Array.from({ length: MAX }, () => ({ x: rnd() * W, y: rnd() * H, vx: (rnd() - .5) * 200, vy: (rnd() - .5) * 200, r: rnd() * 6.28, s: .3 + rnd() * .5, f: (rnd() * 16) | 0 }));
+function move(n, dt) { for (let i = 0; i < n; i++) { const p = P[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.r += dt; if (p.x < 0 || p.x > W) p.vx = -p.vx; if (p.y < 0 || p.y > H) p.vy = -p.vy; } }
+
+// ---- test definitions: each is (n) => draw one frame
+const T = {};
+T.sprites_drawImage_sheet_rot = n => { bg(); move(n, .016); for (let i = 0; i < n; i++) { const p = P[i]; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.globalAlpha = .9; const f = p.f; ctx.drawImage(sheet, (f % 4) * 128, ((f / 4) | 0) * 128, 128, 128, -64 * p.s, -64 * p.s, 128 * p.s, 128 * p.s); ctx.restore(); } ctx.globalAlpha = 1; };
+T.sprites_setTransform = n => { bg(); move(n, .016); for (let i = 0; i < n; i++) { const p = P[i], c = Math.cos(p.r) * p.s, s = Math.sin(p.r) * p.s; ctx.setTransform(c, s, -s, c, p.x, p.y); ctx.drawImage(sheet, (p.f % 4) * 128, ((p.f / 4) | 0) * 128, 128, 128, -64, -64, 128, 128); } ctx.setTransform(1, 0, 0, 1, 0, 0); };
+T.particles_arc_fill_like_engine = n => { bg(); move(n, .016); const base = ctx.globalAlpha; for (let i = 0; i < n; i++) { const p = P[i]; ctx.globalAlpha = .6; ctx.fillStyle = `rgba(255,${100 + (i % 100)},60,1)`; ctx.beginPath(); ctx.arc(p.x, p.y, 2 + p.s * 6, 0, 6.283); ctx.fill(); } ctx.globalAlpha = 1; };
+T.particles_glowsprite_normal = n => { bg(); move(n, .016); for (let i = 0; i < n; i++) { const p = P[i]; ctx.drawImage(glow16, p.x - 16 * p.s * 2, p.y - 16 * p.s * 2, 64 * p.s, 64 * p.s); } };
+T.particles_glowsprite_additive = n => { bg(); move(n, .016); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < n; i++) { const p = P[i]; ctx.drawImage(glow16, p.x - 16 * p.s * 2, p.y - 16 * p.s * 2, 64 * p.s, 64 * p.s); } ctx.globalCompositeOperation = 'source-over'; };
+T.additive_glow64_fill = n => { bg(); move(n, .016); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < n; i++) { const p = P[i]; ctx.drawImage(glow64, p.x - 64, p.y - 64); } ctx.globalCompositeOperation = 'source-over'; };
+T.additive_glow256_fill = n => { bg(); move(n, .016); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < n; i++) { const p = P[i]; ctx.drawImage(glow256, p.x - 256, p.y - 256); } ctx.globalCompositeOperation = 'source-over'; };
+T.shadowBlur_circles_r20 = n => { bg(); move(n, .016); ctx.shadowColor = '#4af'; ctx.shadowBlur = 20; ctx.fillStyle = '#8cf'; for (let i = 0; i < n; i++) { const p = P[i]; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, 6.283); ctx.fill(); } ctx.shadowBlur = 0; };
+T.shadowBlur_sprites_r20 = n => { bg(); move(n, .016); ctx.shadowColor = '#4af'; ctx.shadowBlur = 20; for (let i = 0; i < n; i++) { const p = P[i]; ctx.drawImage(sheet, (p.f % 4) * 128, ((p.f / 4) | 0) * 128, 128, 128, p.x - 24, p.y - 24, 48, 48); } ctx.shadowBlur = 0; };
+T.filter_blur_fullscreen_8px = n => { bg(); move(300, .016); for (let i = 0; i < 300; i++) { const p = P[i]; ctx.drawImage(sheet, (p.f % 4) * 128, ((p.f / 4) | 0) * 128, 128, 128, p.x - 24, p.y - 24, 48, 48); } for (let k = 0; k < n; k++) { ctx.filter = 'blur(8px)'; ctx.drawImage(cv, 0, 0); ctx.filter = 'none'; } };
+const half = mk(W / 2, H / 2), quarter = mk(W / 4, H / 4), eighth = mk(W / 8, H / 8), hc = half.getContext('2d'), qc = quarter.getContext('2d'), ec = eighth.getContext('2d');
+const work = mk(W, H), wctx = work.getContext('2d');
+T.bloom_pipeline_downsample_blur_composite = n => { // n = number of glow sprites in the scene; cost of the bloom pass itself is the delta vs bloom_scene_only
+  wctx.drawImage(bgc, 0, 0); move(n, .016); wctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < n; i++) { const p = P[i]; wctx.drawImage(glow16, p.x - 32, p.y - 32, 64, 64); } wctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(work, 0, 0);
+  hc.drawImage(work, 0, 0, W / 2, H / 2); qc.drawImage(half, 0, 0, W / 4, H / 4); ec.drawImage(quarter, 0, 0, W / 8, H / 8);
+  qc.clearRect(0, 0, W / 4, H / 4); qc.filter = 'blur(6px)'; qc.drawImage(eighth, 0, 0, W / 4, H / 4); qc.filter = 'none';
+  ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .8; ctx.drawImage(quarter, 0, 0, W, H); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; };
+T.bloom_scene_only = n => { wctx.drawImage(bgc, 0, 0); move(n, .016); wctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < n; i++) { const p = P[i]; wctx.drawImage(glow16, p.x - 32, p.y - 32, 64, 64); } wctx.globalCompositeOperation = 'source-over'; ctx.drawImage(work, 0, 0); };
+T.bloom_noBlurFilter_mipchain_only = n => { wctx.drawImage(bgc, 0, 0); move(n, .016); wctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < n; i++) { const p = P[i]; wctx.drawImage(glow16, p.x - 32, p.y - 32, 64, 64); } wctx.globalCompositeOperation = 'source-over'; ctx.drawImage(work, 0, 0);
+  hc.drawImage(work, 0, 0, W / 2, H / 2); qc.drawImage(half, 0, 0, W / 4, H / 4); ec.drawImage(quarter, 0, 0, W / 8, H / 8);
+  ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .6; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(eighth, 0, 0, W, H); ctx.drawImage(quarter, 0, 0, W, H); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; };
+// lighting: a half-res lightmap, N radial lights additive, then multiply over the scene
+const lm = mk(W / 2, H / 2), lctx = lm.getContext('2d'); const lightSprite = glow(128, '#ffe0b0');
+T.lighting_lightmap_multiply = n => { bg(); move(300, .016); for (let i = 0; i < 300; i++) { const p = P[i]; ctx.drawImage(sheet, (p.f % 4) * 128, ((p.f / 4) | 0) * 128, 128, 128, p.x - 24, p.y - 24, 48, 48); }
+  lctx.globalCompositeOperation = 'source-over'; lctx.fillStyle = '#202838'; lctx.fillRect(0, 0, W / 2, H / 2); lctx.globalCompositeOperation = 'lighter'; move(n, .016);
+  for (let i = 0; i < n; i++) { const p = P[i]; lctx.drawImage(lightSprite, p.x / 2 - 64, p.y / 2 - 64); }
+  ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(lm, 0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; };
+T.vignette_prebaked_drawImage = n => { bg(); for (let k = 0; k < n; k++) ctx.drawImage(bgc, 0, 0, 1920, 1080); };
+T.fullscreen_overdraw_drawImage = n => { for (let k = 0; k < n; k++) ctx.drawImage(bgc, 0, 0); };
+T.filter_colorgrade_fullscreen = n => { bg(); for (let k = 0; k < n; k++) { ctx.filter = 'contrast(1.1) saturate(1.2) hue-rotate(5deg)'; ctx.drawImage(cv, 0, 0); ctx.filter = 'none'; } };
+// vector body drawn each frame vs cached to a bitmap
+const vecDraw = (g, x, y) => { const gr = g.createLinearGradient(x - 40, y - 40, x + 40, y + 40); gr.addColorStop(0, '#9fe'); gr.addColorStop(1, '#136'); g.fillStyle = gr; g.beginPath(); g.moveTo(x - 40, y); g.quadraticCurveTo(x, y - 60, x + 40, y); g.quadraticCurveTo(x, y + 60, x - 40, y); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke(); };
+const cached = mk(96, 96); vecDraw(cached.getContext('2d'), 48, 48);
+T.vector_paths_each_frame = n => { bg(); move(n, .016); for (let i = 0; i < n; i++) vecDraw(ctx, P[i].x, P[i].y); };
+T.vector_paths_cached_bitmap = n => { bg(); move(n, .016); for (let i = 0; i < n; i++) ctx.drawImage(cached, P[i].x - 48, P[i].y - 48); };
+T.fillRect_only_baseline = n => { bg(); move(n, .016); ctx.fillStyle = '#fa0'; for (let i = 0; i < n; i++) ctx.fillRect(P[i].x, P[i].y, 6, 6); };
+T.trails_lineTo_polylines_len30 = n => { bg(); move(n, .016); ctx.strokeStyle = '#4cf'; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const p = P[i]; ctx.beginPath(); ctx.moveTo(p.x, p.y); for (let k = 1; k < 30; k++) ctx.lineTo(p.x - p.vx * .02 * k + Math.sin(k) * 3, p.y - p.vy * .02 * k); ctx.stroke(); } };
+T.trails_segment_alpha_len30 = n => { bg(); move(n, .016); ctx.strokeStyle = '#4cf'; ctx.lineWidth = 4; ctx.lineCap = 'round'; for (let i = 0; i < n; i++) { const p = P[i]; for (let k = 1; k < 30; k++) { ctx.globalAlpha = 1 - k / 30; ctx.beginPath(); ctx.moveTo(p.x - p.vx * .02 * (k - 1), p.y - p.vy * .02 * (k - 1)); ctx.lineTo(p.x - p.vx * .02 * k, p.y - p.vy * .02 * k); ctx.stroke(); } } ctx.globalAlpha = 1; };
+
+const ladder = (a, k = 9) => Array.from({ length: k }, (_, i) => a * 2 ** i);
+const PLAN = [
+ ['fillRect_only_baseline', ladder(20000, 4)],
+ ['sprites_drawImage_sheet_rot', ladder(2000, 6)],
+ ['sprites_setTransform', ladder(4000, 5)],
+ ['particles_arc_fill_like_engine', ladder(4000, 5)],
+ ['particles_glowsprite_normal', ladder(4000, 5)],
+ ['particles_glowsprite_additive', ladder(4000, 5)],
+ ['additive_glow64_fill', ladder(1000, 5)],
+ ['additive_glow256_fill', ladder(100, 7)],
+ ['shadowBlur_circles_r20', [20, 50, 100, 200, 300]],
+ ['shadowBlur_sprites_r20', [20, 50, 100, 200, 300]],
+ ['filter_blur_fullscreen_8px', [1, 4, 8, 16, 32]],
+ ['filter_colorgrade_fullscreen', [1, 4, 8, 16, 32]],
+ ['fullscreen_overdraw_drawImage', [16, 64, 128, 256, 512]],
+ ['bloom_scene_only', ladder(3000, 4)],
+ ['bloom_pipeline_downsample_blur_composite', ladder(3000, 4)],
+ ['lighting_lightmap_multiply', ladder(300, 5)],
+ ['vector_paths_each_frame', ladder(3000, 4)],
+ ['vector_paths_cached_bitmap', ladder(8000, 3)],
+ ['trails_lineTo_polylines_len30', ladder(600, 4)],
+ ['trails_segment_alpha_len30', ladder(600, 4)],
+];
+const results = []; window.__results = results; window.__done = false;
+function runCase(name, n) { return new Promise(res => { const fn = T[name]; let frames = 0, last = performance.now(), ints = [], cpu = [];
+  function tick(now) { const t0 = performance.now(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; fn(n); const t1 = performance.now();
+    if (frames >= 15) { ints.push(now - last); cpu.push(t1 - t0); } last = now; frames++;
+    if (frames < 75) requestAnimationFrame(tick); else { ints.sort((a, b) => a - b); const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+      res({ name, n, frameMs: +avg(ints).toFixed(2), p95: +ints[Math.floor(ints.length * .95)].toFixed(2), jsMs: +avg(cpu).toFixed(2), fps: +(1000 / avg(ints)).toFixed(1) }); } }
+  requestAnimationFrame(tick); }); }
+(async () => {
+  let gpu = 'n/a'; try { const gl = document.createElement('canvas').getContext('webgl2'); const e = gl.getExtension('WEBGL_debug_renderer_info'); gpu = e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : 'webgl2 (no debug info)'; } catch (e) {}
+  window.__env = { ua: navigator.userAgent, gpu, dpr: devicePixelRatio, cores: navigator.hardwareConcurrency };
+  for (const [name, ns] of PLAN) { for (const n of ns) { const r = await runCase(name, n); results.push(r); document.getElementById('out').textContent = JSON.stringify(window.__env) + '\n' + results.map(r => `${r.name} n=${r.n} frame=${r.frameMs}ms p95=${r.p95} js=${r.jsMs}ms fps=${r.fps}`).join('\n'); if (r.frameMs > 20) break; } }
+  window.__done = true; })();
+</script>
