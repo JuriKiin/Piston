@@ -16,7 +16,7 @@ Obfuscation raises the effort to read or copy a game; it cannot make client code
 Property names are never renamed, because scene files refer to fields by name. Registered type names are strings, which obfuscation encodes.
 
 ## "Made with Piston" splash
-Every **Release** build opens with a short (about two seconds) branded splash: a press pushes the Piston mark and wordmark into the centre of the screen, draws back, and the page fades into your game. A click or any key skips it. The game loads underneath while the splash plays, so it adds no load time; the game starts running when both are done. Development builds, and Play in the editor, never show it.
+Every **Release** build opens with a short (about three seconds) branded splash: a press with a cream head pushes the word Piston into the centre of the screen and draws back, the Piston mark drops in and bounces into place beside the name, and the page fades into your game. A click or any key skips it. The game loads underneath while the splash plays, so it adds no load time; the game starts running when both are done. Development builds, and Play in the editor, never show it.
 
 The splash is compiled into the Release bundle (it is not part of the page), so it is minified and obfuscated with your game, and a Release is still one hashed script plus the page and your assets. It is part of every Release and has no setting to turn it off; the Player will not start a Release that is missing it. Players with *reduce motion* turned on see the lockup centred without the press.
 

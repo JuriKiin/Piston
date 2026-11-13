@@ -12,7 +12,7 @@ const src = fs.readFileSync(srcPath, 'utf8');
 /** Runs the splash script against a stub page; returns handles to drive its clock and inspect what it did to the DOM. */
 function boot({ reduced = false } = {}) {
     const mk = (w = 0, h = 0) => ({ style: {}, offsetWidth: w, offsetHeight: h, parentNode: null });
-    const els = { 'pstn-rod': mk(), 'pstn-plate': mk(0, 18), 'pstn-lock': mk(300, 100), 'pstn-made': mk(0, 14), 'pstn-splash': Object.assign(mk(), { listeners: {}, addEventListener(t, f) { this.listeners[t] = f; }, removeEventListener() {} }) };
+    const els = { 'pstn-icon': mk(), 'pstn-rod': mk(), 'pstn-plate': mk(0, 18), 'pstn-lock': mk(300, 100), 'pstn-made': mk(0, 14), 'pstn-splash': Object.assign(mk(), { listeners: {}, addEventListener(t, f) { this.listeners[t] = f; }, removeEventListener() {} }) };
     els['pstn-splash'].parentNode = { removeChild() { els.removed = true; } };
     const listeners = {}; let raf = null;
     const window = { innerHeight: 800, matchMedia: () => ({ matches: reduced }), addEventListener(t, f) { listeners[t] = f; }, removeEventListener() {}, requestAnimationFrame(f) { raf = f; } };
@@ -30,19 +30,20 @@ await test('the splash is self-contained module code: no external requests, smal
     assert.ok(!/(src|href)=["']https?:/.test(src) && !/<script/.test(src) && !/url\(/.test(src));
     assert.ok(src.length < 9000, `splash is ${src.length} bytes`);
 });
-await test('it plays for about two seconds, pushes the lockup to the centre, then resolves and removes itself', async () => {
+await test('it plays for under three seconds, pushes the word to the centre, drops the mark in, then resolves and removes itself', async () => {
     const s = boot();
     s.step(0);
     assert.equal(await s.isDone(), false);
     s.step(900);                                   // the press has just pushed the lockup into place
     const lockY = parseFloat(s.els['pstn-lock'].style.transform.match(/,\s*(-?[\d.]+)px/)[1]);
     assert.ok(Math.abs(lockY + 50 - 400) < 25, `lockup centre ${lockY + 50} should be near 400`);
-    s.step(1500);
+    s.step(1300); assert.equal(s.els['pstn-icon'].style.opacity, '1', 'the mark is dropping in');
+    s.step(2300);
     assert.equal(s.els['pstn-made'].style.opacity, '1');
-    s.step(1900);
+    s.step(3100);
     assert.ok(parseFloat(s.els['pstn-splash'].style.opacity) < 0.5, 'fading out');
     assert.equal(await s.isDone(), false);
-    s.step(2100);
+    s.step(3300);
     assert.equal(await s.isDone(), true);
     assert.equal(s.els.removed, true);
 });
