@@ -1,0 +1,1742 @@
+{
+  "version": 3,
+  "sceneName": "Mini Golf - Hole 2",
+  "backgroundColor": "#2f7d45",
+  "deletedKeys": [],
+  "entities": [
+    {
+      "sceneKey": "ground-1",
+      "tag": "Polygon",
+      "name": "Fairway",
+      "type": "Polygon",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 647.36,
+          "y": 72.04
+        },
+        "rotation": 0,
+        "size": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "fields": {},
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 0,
+        "isStatic": true,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": false,
+        "isInverse": true
+      },
+      "components": [
+        {
+          "type": "PolygonRenderer",
+          "fields": {
+            "vertices": [
+              {
+                "x": -650.21,
+                "y": 352.93
+              },
+              {
+                "x": -636.48,
+                "y": 353.23
+              },
+              {
+                "x": -619.52,
+                "y": 354.07
+              },
+              {
+                "x": -597.98,
+                "y": 355.41
+              },
+              {
+                "x": -572.88,
+                "y": 357.07
+              },
+              {
+                "x": -544.92,
+                "y": 358.87
+              },
+              {
+                "x": -514.67,
+                "y": 360.65
+              },
+              {
+                "x": -482.65,
+                "y": 362.22
+              },
+              {
+                "x": -449.32,
+                "y": 363.41
+              },
+              {
+                "x": -415.09,
+                "y": 364.03
+              },
+              {
+                "x": -380.35,
+                "y": 363.87
+              },
+              {
+                "x": -345.4,
+                "y": 362.72
+              },
+              {
+                "x": -310.47,
+                "y": 360.31
+              },
+              {
+                "x": -275.68,
+                "y": 356.29
+              },
+              {
+                "x": -242.57,
+                "y": 350.48
+              },
+              {
+                "x": -212.59,
+                "y": 343.62
+              },
+              {
+                "x": -184.07,
+                "y": 336.18
+              },
+              {
+                "x": -155.66,
+                "y": 327.84
+              },
+              {
+                "x": -127.39,
+                "y": 318.61
+              },
+              {
+                "x": -99.33,
+                "y": 308.46
+              },
+              {
+                "x": -71.53,
+                "y": 297.38
+              },
+              {
+                "x": -44.04,
+                "y": 285.35
+              },
+              {
+                "x": -16.93,
+                "y": 272.35
+              },
+              {
+                "x": 9.76,
+                "y": 258.36
+              },
+              {
+                "x": 35.96,
+                "y": 243.34
+              },
+              {
+                "x": 61.6,
+                "y": 227.28
+              },
+              {
+                "x": 86.61,
+                "y": 210.13
+              },
+              {
+                "x": 110.93,
+                "y": 191.87
+              },
+              {
+                "x": 136.24,
+                "y": 170.88
+              },
+              {
+                "x": 162.55,
+                "y": 144.98
+              },
+              {
+                "x": 186.26,
+                "y": 116.14
+              },
+              {
+                "x": 206.14,
+                "y": 87.16
+              },
+              {
+                "x": 223.1,
+                "y": 58.63
+              },
+              {
+                "x": 237.88,
+                "y": 30.96
+              },
+              {
+                "x": 251.08,
+                "y": 4.49
+              },
+              {
+                "x": 263.15,
+                "y": -20.44
+              },
+              {
+                "x": 274.41,
+                "y": -43.46
+              },
+              {
+                "x": 285.06,
+                "y": -64.14
+              },
+              {
+                "x": 295.14,
+                "y": -82.04
+              },
+              {
+                "x": 304.54,
+                "y": -96.76
+              },
+              {
+                "x": 313.01,
+                "y": -108.03
+              },
+              {
+                "x": 320.18,
+                "y": -115.85
+              },
+              {
+                "x": 326.48,
+                "y": -121.19
+              },
+              {
+                "x": 335.56,
+                "y": -126.88
+              },
+              {
+                "x": 349.76,
+                "y": -134.0
+              },
+              {
+                "x": 368.16,
+                "y": -141.55
+              },
+              {
+                "x": 389.83,
+                "y": -149.0
+              },
+              {
+                "x": 413.91,
+                "y": -156.05
+              },
+              {
+                "x": 439.61,
+                "y": -162.57
+              },
+              {
+                "x": 466.22,
+                "y": -168.54
+              },
+              {
+                "x": 493.11,
+                "y": -173.97
+              },
+              {
+                "x": 519.68,
+                "y": -178.92
+              },
+              {
+                "x": 545.42,
+                "y": -183.48
+              },
+              {
+                "x": 569.96,
+                "y": -187.76
+              },
+              {
+                "x": 593.08,
+                "y": -191.96
+              },
+              {
+                "x": 615.06,
+                "y": -196.4
+              },
+              {
+                "x": 632.52,
+                "y": -200.67
+              },
+              {
+                "x": 668.57,
+                "y": -215.84
+              },
+              {
+                "x": 698.16,
+                "y": -241.41
+              },
+              {
+                "x": 718.4,
+                "y": -274.88
+              },
+              {
+                "x": 727.31,
+                "y": -312.96
+              },
+              {
+                "x": 724.01,
+                "y": -351.93
+              },
+              {
+                "x": 708.83,
+                "y": -387.97
+              },
+              {
+                "x": 683.26,
+                "y": -417.56
+              },
+              {
+                "x": 649.8,
+                "y": -437.8
+              },
+              {
+                "x": 611.72,
+                "y": -446.71
+              },
+              {
+                "x": 572.75,
+                "y": -443.41
+              },
+              {
+                "x": 561.06,
+                "y": -440.5
+              },
+              {
+                "x": 546.3,
+                "y": -437.54
+              },
+              {
+                "x": 526.2,
+                "y": -433.9
+              },
+              {
+                "x": 502.12,
+                "y": -429.7
+              },
+              {
+                "x": 474.95,
+                "y": -424.89
+              },
+              {
+                "x": 445.4,
+                "y": -419.38
+              },
+              {
+                "x": 414.05,
+                "y": -413.04
+              },
+              {
+                "x": 381.41,
+                "y": -405.71
+              },
+              {
+                "x": 347.92,
+                "y": -397.18
+              },
+              {
+                "x": 313.98,
+                "y": -387.21
+              },
+              {
+                "x": 279.9,
+                "y": -375.45
+              },
+              {
+                "x": 245.89,
+                "y": -361.4
+              },
+              {
+                "x": 212.13,
+                "y": -344.28
+              },
+              {
+                "x": 178.79,
+                "y": -322.9
+              },
+              {
+                "x": 147.85,
+                "y": -296.98
+              },
+              {
+                "x": 121.48,
+                "y": -268.7
+              },
+              {
+                "x": 99.5,
+                "y": -239.79
+              },
+              {
+                "x": 80.98,
+                "y": -211.02
+              },
+              {
+                "x": 65.06,
+                "y": -182.88
+              },
+              {
+                "x": 51.04,
+                "y": -155.73
+              },
+              {
+                "x": 38.37,
+                "y": -129.89
+              },
+              {
+                "x": 26.67,
+                "y": -105.71
+              },
+              {
+                "x": 15.66,
+                "y": -83.59
+              },
+              {
+                "x": 5.21,
+                "y": -63.94
+              },
+              {
+                "x": -4.69,
+                "y": -47.19
+              },
+              {
+                "x": -13.87,
+                "y": -33.69
+              },
+              {
+                "x": -22.03,
+                "y": -23.63
+              },
+              {
+                "x": -30.97,
+                "y": -14.96
+              },
+              {
+                "x": -43.7,
+                "y": -4.58
+              },
+              {
+                "x": -59.13,
+                "y": 7.01
+              },
+              {
+                "x": -75.43,
+                "y": 18.18
+              },
+              {
+                "x": -92.55,
+                "y": 28.9
+              },
+              {
+                "x": -110.43,
+                "y": 39.14
+              },
+              {
+                "x": -129.0,
+                "y": 48.88
+              },
+              {
+                "x": -148.19,
+                "y": 58.07
+              },
+              {
+                "x": -167.92,
+                "y": 66.71
+              },
+              {
+                "x": -188.13,
+                "y": 74.76
+              },
+              {
+                "x": -208.74,
+                "y": 82.21
+              },
+              {
+                "x": -229.66,
+                "y": 89.05
+              },
+              {
+                "x": -250.83,
+                "y": 95.25
+              },
+              {
+                "x": -272.16,
+                "y": 100.82
+              },
+              {
+                "x": -292.16,
+                "y": 105.44
+              },
+              {
+                "x": -311.44,
+                "y": 108.86
+              },
+              {
+                "x": -333.18,
+                "y": 111.35
+              },
+              {
+                "x": -357.96,
+                "y": 113.04
+              },
+              {
+                "x": -384.94,
+                "y": 113.91
+              },
+              {
+                "x": -413.37,
+                "y": 114.03
+              },
+              {
+                "x": -442.61,
+                "y": 113.5
+              },
+              {
+                "x": -472.08,
+                "y": 112.45
+              },
+              {
+                "x": -501.22,
+                "y": 111.01
+              },
+              {
+                "x": -529.55,
+                "y": 109.35
+              },
+              {
+                "x": -556.6,
+                "y": 107.6
+              },
+              {
+                "x": -581.99,
+                "y": 105.92
+              },
+              {
+                "x": -605.48,
+                "y": 104.47
+              },
+              {
+                "x": -627.08,
+                "y": 103.4
+              },
+              {
+                "x": -644.52,
+                "y": 102.99
+              },
+              {
+                "x": -683.27,
+                "y": 108.23
+              },
+              {
+                "x": -718.51,
+                "y": 125.18
+              },
+              {
+                "x": -746.79,
+                "y": 152.2
+              },
+              {
+                "x": -765.34,
+                "y": 186.63
+              },
+              {
+                "x": -772.33,
+                "y": 225.11
+              },
+              {
+                "x": -767.1,
+                "y": 263.87
+              },
+              {
+                "x": -750.14,
+                "y": 299.11
+              },
+              {
+                "x": -723.12,
+                "y": 327.39
+              },
+              {
+                "x": -688.69,
+                "y": 345.93
+              }
+            ],
+            "color": "#69c26f",
+            "strokeColor": "#6b4a2b",
+            "strokeWidth": 9,
+            "opacity": 1,
+            "sortingOrder": 0
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "ball",
+      "tag": "Ball",
+      "name": "Ball",
+      "type": "Ball",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 60,
+          "y": 300
+        },
+        "rotation": 0,
+        "size": {
+          "x": 24,
+          "y": 24
+        }
+      },
+      "fields": {
+        "radius": 12,
+        "maxDragDistance": 180,
+        "powerScale": 0.1,
+        "pickRadius": 40,
+        "restSpeed": 5,
+        "sinkDuration": 0.4,
+        "shotCount": 0
+      },
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 1,
+        "isStatic": false,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": false,
+        "isInverse": false
+      },
+      "components": [
+        {
+          "type": "SpriteRenderer",
+          "fields": {
+            "imagePath": "./assets/art/ball.png",
+            "frameWidth": 16,
+            "frameHeight": 16,
+            "frameCount": 1,
+            "columns": 1,
+            "fps": 0,
+            "loop": true,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "opacity": 1,
+            "pixelArt": true,
+            "sortingOrder": 3
+          }
+        },
+        {
+          "type": "Animator",
+          "fields": {
+            "clips": [
+              {
+                "name": "sink",
+                "duration": 0.45,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.size.x",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 24,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.45,
+                        "v": 0,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "transform.size.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 24,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.45,
+                        "v": 0,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "SpriteRenderer.opacity",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 1,
+                        "ease": "linear"
+                      },
+                      {
+                        "t": 0.3,
+                        "v": 1,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.45,
+                        "v": 0.2,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              },
+              {
+                "name": "tunnelIn",
+                "duration": 0.25,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.size.x",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 24,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.25,
+                        "v": 0,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "transform.size.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 24,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.25,
+                        "v": 0,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              },
+              {
+                "name": "tunnelOut",
+                "duration": 0.3,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.size.x",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 0,
+                        "ease": "backOut"
+                      },
+                      {
+                        "t": 0.3,
+                        "v": 24,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "transform.size.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 0,
+                        "ease": "backOut"
+                      },
+                      {
+                        "t": 0.3,
+                        "v": 24,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              }
+            ],
+            "asset": "",
+            "defaultClip": "",
+            "playOnStart": false,
+            "speed": 1
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 8,
+            "lifetime": 0.5,
+            "speed": 55,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 360,
+            "gravity": 0,
+            "shape": "circle",
+            "startSize": 7,
+            "endSize": 1,
+            "startColor": "#e9e4d0",
+            "endColor": "#e9e4d0",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "hole",
+      "tag": "Hole",
+      "name": "Hole",
+      "type": "Hole",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1190,
+          "y": -250
+        },
+        "rotation": 0,
+        "size": {
+          "x": 38.4,
+          "y": 38.4
+        }
+      },
+      "fields": {},
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 1000,
+        "isStatic": true,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": true,
+        "isInverse": false
+      },
+      "components": [
+        {
+          "type": "SpriteRenderer",
+          "fields": {
+            "imagePath": "./assets/art/hole.png",
+            "frameWidth": 24,
+            "frameHeight": 24,
+            "frameCount": 2,
+            "columns": 2,
+            "fps": 0,
+            "loop": true,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "opacity": 1,
+            "pixelArt": true,
+            "sortingOrder": 0
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 18,
+            "lifetime": 1.1,
+            "speed": 300,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 150,
+            "gravity": 420,
+            "shape": "square",
+            "startSize": 8,
+            "endSize": 4,
+            "startColor": "#ffd166",
+            "endColor": "#ff9f1c",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 18,
+            "lifetime": 1.1,
+            "speed": 300,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 150,
+            "gravity": 420,
+            "shape": "square",
+            "startSize": 8,
+            "endSize": 4,
+            "startColor": "#ef476f",
+            "endColor": "#c77dff",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 18,
+            "lifetime": 1.1,
+            "speed": 300,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 150,
+            "gravity": 420,
+            "shape": "square",
+            "startSize": 8,
+            "endSize": 4,
+            "startColor": "#7ec8e3",
+            "endColor": "#ffffff",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "flag",
+      "tag": "Flag",
+      "name": "Flag",
+      "type": "Flag",
+      "parentKey": "hole",
+      "transform": {
+        "position": {
+          "x": 1192,
+          "y": -247
+        },
+        "rotation": 0,
+        "size": {
+          "x": 32,
+          "y": 60
+        }
+      },
+      "fields": {}
+    },
+    {
+      "sceneKey": "decor-1",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1522.78,
+          "y": -397.53
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-2",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 6.1,
+          "y": -421.08
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-3",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1198.2,
+          "y": -469.82
+        },
+        "rotation": 0,
+        "size": {
+          "x": 70,
+          "y": 70
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-4",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1471.59,
+          "y": 251.29
+        },
+        "rotation": 0,
+        "size": {
+          "x": 90,
+          "y": 90
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-5",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1376.54,
+          "y": 122.56
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-6",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 253.85,
+          "y": -338.27
+        },
+        "rotation": 0,
+        "size": {
+          "x": 90,
+          "y": 90
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-7",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1571.44,
+          "y": 566.81
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-8",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1519.85,
+          "y": -192.6
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-9",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 654.82,
+          "y": -231.83
+        },
+        "rotation": 0,
+        "size": {
+          "x": 90,
+          "y": 90
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-10",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 7.62,
+          "y": -506.17
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-11",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 466.88,
+          "y": -265.1
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-12",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 423.54,
+          "y": 536.13
+        },
+        "rotation": 0,
+        "size": {
+          "x": 90,
+          "y": 90
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-13",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -182.3,
+          "y": 621.88
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-14",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 112.88,
+          "y": -556.62
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-15",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -19.09,
+          "y": 86.22
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-16",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1427.86,
+          "y": 184.95
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-17",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1004.34,
+          "y": -502.64
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-18",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1449.89,
+          "y": -16.25
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-19",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1327.07,
+          "y": 2.33
+        },
+        "rotation": 0,
+        "size": {
+          "x": 90,
+          "y": 90
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-20",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1251.53,
+          "y": 159.78
+        },
+        "rotation": 0,
+        "size": {
+          "x": 70,
+          "y": 70
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-21",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 11.15,
+          "y": -147.62
+        },
+        "rotation": 0,
+        "size": {
+          "x": 70,
+          "y": 70
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-22",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -272.92,
+          "y": 586.93
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-23",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1591.21,
+          "y": 71.68
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-24",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -0.95,
+          "y": -235.59
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-25",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -124.62,
+          "y": 516.72
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-26",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -279.95,
+          "y": -114.86
+        },
+        "rotation": 0,
+        "size": {
+          "x": 70,
+          "y": 70
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-27",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 889.45,
+          "y": -506.16
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-28",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 555.21,
+          "y": -268.15
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-29",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1452.75,
+          "y": 543.66
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-30",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -243.68,
+          "y": 29.22
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "camera",
+      "tag": "MainCamera",
+      "name": "Camera",
+      "type": "MainCamera",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 624.85,
+          "y": 10.7
+        },
+        "rotation": 0,
+        "size": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Camera",
+          "fields": {
+            "zoom": 0.925
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "shotcount",
+      "tag": "ShotCount",
+      "name": "ShotCount",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 74.5,
+          "y": 34
+        },
+        "rotation": 0,
+        "size": {
+          "x": 120,
+          "y": 40
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Stroke 0",
+            "fontFamily": "Chewy",
+            "fontSize": 20,
+            "color": "#ffffff",
+            "align": "center",
+            "sortingOrder": 2
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "#1f2a24",
+            "imagePath": "",
+            "cornerRadius": 8,
+            "sortingOrder": 1
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "par",
+      "tag": "Par",
+      "name": "Par",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 206.5,
+          "y": 34
+        },
+        "rotation": 0,
+        "size": {
+          "x": 120,
+          "y": 40
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Par 3",
+            "fontFamily": "Chewy",
+            "fontSize": 20,
+            "color": "#ffffff",
+            "align": "center",
+            "sortingOrder": 1
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "#26332c",
+            "imagePath": "",
+            "cornerRadius": 8,
+            "sortingOrder": 0
+          }
+        },
+        {
+          "type": "LevelInfo",
+          "fields": {
+            "title": "Hole 2: The Dogleg",
+            "par": 3,
+            "nextScene": "hole3"
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "title",
+      "tag": "Title",
+      "name": "Title",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 960,
+          "y": 34
+        },
+        "rotation": 0,
+        "size": {
+          "x": 520,
+          "y": 40
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Hole 2 \u00b7 The Dogleg",
+            "fontFamily": "Chewy",
+            "fontSize": 20,
+            "color": "#ffffff",
+            "align": "center",
+            "sortingOrder": 2
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "#1f2a24",
+            "imagePath": "",
+            "cornerRadius": 8,
+            "sortingOrder": 1
+          }
+        }
+      ]
+    }
+  ]
+}

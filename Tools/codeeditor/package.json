@@ -1,0 +1,11 @@
+{
+  "name": "piston-code-editor",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "../../Toolchain/esbuild entry.js --bundle --minify --format=iife --target=safari16 --outfile=../../EditorWeb/editor.js" },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6", "@codemirror/commands": "^6", "@codemirror/lang-javascript": "^6", "@codemirror/lang-json": "^6",
+    "@codemirror/language": "^6", "@codemirror/lint": "^6", "@codemirror/search": "^6", "@codemirror/state": "^6", "@codemirror/view": "^6",
+    "@lezer/highlight": "^1"
+  }
+}

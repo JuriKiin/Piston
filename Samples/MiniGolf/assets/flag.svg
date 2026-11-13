@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="60" viewBox="0 0 128 60">
+    <!-- A 4-frame waving-flag spritesheet, one 32x60 frame per <g> - SpriteRenderer slices this
+         exactly like a raster sheet (drawImage's source-rect slicing works on a loaded SVG image
+         the same way it does on a PNG, as long as the root <svg> declares real pixel width/height,
+         which it does above). Each frame shares an identical pole/knob; only the flag pennant's
+         curve control points change, to fake a ripple across the 4-frame loop. -->
+
+    <g transform="translate(0,0)">
+        <rect x="14" y="8" width="4" height="48" fill="#5a5a5a" stroke="#333" stroke-width="1"/>
+        <circle cx="16" cy="6" r="3.5" fill="#f4c542" stroke="#9c7a1a" stroke-width="1"/>
+        <path d="M18,10 Q25,7 30,12 Q24,15 18,24 Z" fill="#e63946" stroke="#8a1c24" stroke-width="1"/>
+    </g>
+
+    <g transform="translate(32,0)">
+        <rect x="14" y="8" width="4" height="48" fill="#5a5a5a" stroke="#333" stroke-width="1"/>
+        <circle cx="16" cy="6" r="3.5" fill="#f4c542" stroke="#9c7a1a" stroke-width="1"/>
+        <path d="M18,10 Q25,11 30,16 Q24,19 18,24 Z" fill="#e63946" stroke="#8a1c24" stroke-width="1"/>
+    </g>
+
+    <g transform="translate(64,0)">
+        <rect x="14" y="8" width="4" height="48" fill="#5a5a5a" stroke="#333" stroke-width="1"/>
+        <circle cx="16" cy="6" r="3.5" fill="#f4c542" stroke="#9c7a1a" stroke-width="1"/>
+        <path d="M18,10 Q25,15 30,20 Q23,22 18,24 Z" fill="#e63946" stroke="#8a1c24" stroke-width="1"/>
+    </g>
+
+    <g transform="translate(96,0)">
+        <rect x="14" y="8" width="4" height="48" fill="#5a5a5a" stroke="#333" stroke-width="1"/>
+        <circle cx="16" cy="6" r="3.5" fill="#f4c542" stroke="#9c7a1a" stroke-width="1"/>
+        <path d="M18,10 Q25,11 30,15 Q24,18 18,24 Z" fill="#e63946" stroke="#8a1c24" stroke-width="1"/>
+    </g>
+</svg>

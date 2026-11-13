@@ -1,0 +1,1616 @@
+{
+  "version": 3,
+  "sceneName": "Mini Golf - Hole 6",
+  "backgroundColor": "#2f7d45",
+  "deletedKeys": [],
+  "entities": [
+    {
+      "sceneKey": "ground-1",
+      "tag": "Polygon",
+      "name": "Fairway",
+      "type": "Polygon",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 350.0,
+          "y": -0.0
+        },
+        "rotation": 0,
+        "size": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "fields": {},
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 0,
+        "isStatic": true,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": false,
+        "isInverse": true
+      },
+      "components": [
+        {
+          "type": "PolygonRenderer",
+          "fields": {
+            "vertices": [
+              {
+                "x": -350.0,
+                "y": 130.0
+              },
+              {
+                "x": 350.0,
+                "y": 130.0
+              },
+              {
+                "x": 390.17,
+                "y": 123.64
+              },
+              {
+                "x": 426.41,
+                "y": 105.17
+              },
+              {
+                "x": 455.17,
+                "y": 76.41
+              },
+              {
+                "x": 473.64,
+                "y": 40.17
+              },
+              {
+                "x": 480.0,
+                "y": 0.0
+              },
+              {
+                "x": 473.64,
+                "y": -40.17
+              },
+              {
+                "x": 455.17,
+                "y": -76.41
+              },
+              {
+                "x": 426.41,
+                "y": -105.17
+              },
+              {
+                "x": 390.17,
+                "y": -123.64
+              },
+              {
+                "x": 350.0,
+                "y": -130.0
+              },
+              {
+                "x": -350.0,
+                "y": -130.0
+              },
+              {
+                "x": -390.17,
+                "y": -123.64
+              },
+              {
+                "x": -426.41,
+                "y": -105.17
+              },
+              {
+                "x": -455.17,
+                "y": -76.41
+              },
+              {
+                "x": -473.64,
+                "y": -40.17
+              },
+              {
+                "x": -480.0,
+                "y": -0.0
+              },
+              {
+                "x": -473.64,
+                "y": 40.17
+              },
+              {
+                "x": -455.17,
+                "y": 76.41
+              },
+              {
+                "x": -426.41,
+                "y": 105.17
+              },
+              {
+                "x": -390.17,
+                "y": 123.64
+              }
+            ],
+            "color": "#69c26f",
+            "strokeColor": "#6b4a2b",
+            "strokeWidth": 9,
+            "opacity": 1,
+            "sortingOrder": 0
+          }
+        },
+        {
+          "type": "CollisionLayer",
+          "fields": {
+            "layer": "Wall",
+            "ignores": "Enemy"
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "ground-2",
+      "tag": "Polygon",
+      "name": "Fairway",
+      "type": "Polygon",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1350.0,
+          "y": 440.0
+        },
+        "rotation": 0,
+        "size": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "fields": {},
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 0,
+        "isStatic": true,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": false,
+        "isInverse": true
+      },
+      "components": [
+        {
+          "type": "PolygonRenderer",
+          "fields": {
+            "vertices": [
+              {
+                "x": -350.0,
+                "y": 130.0
+              },
+              {
+                "x": 350.0,
+                "y": 130.0
+              },
+              {
+                "x": 390.17,
+                "y": 123.64
+              },
+              {
+                "x": 426.41,
+                "y": 105.17
+              },
+              {
+                "x": 455.17,
+                "y": 76.41
+              },
+              {
+                "x": 473.64,
+                "y": 40.17
+              },
+              {
+                "x": 480.0,
+                "y": -0.0
+              },
+              {
+                "x": 473.64,
+                "y": -40.17
+              },
+              {
+                "x": 455.17,
+                "y": -76.41
+              },
+              {
+                "x": 426.41,
+                "y": -105.17
+              },
+              {
+                "x": 390.17,
+                "y": -123.64
+              },
+              {
+                "x": 350.0,
+                "y": -130.0
+              },
+              {
+                "x": -350.0,
+                "y": -130.0
+              },
+              {
+                "x": -390.17,
+                "y": -123.64
+              },
+              {
+                "x": -426.41,
+                "y": -105.17
+              },
+              {
+                "x": -455.17,
+                "y": -76.41
+              },
+              {
+                "x": -473.64,
+                "y": -40.17
+              },
+              {
+                "x": -480.0,
+                "y": -0.0
+              },
+              {
+                "x": -473.64,
+                "y": 40.17
+              },
+              {
+                "x": -455.17,
+                "y": 76.41
+              },
+              {
+                "x": -426.41,
+                "y": 105.17
+              },
+              {
+                "x": -390.17,
+                "y": 123.64
+              }
+            ],
+            "color": "#69c26f",
+            "strokeColor": "#6b4a2b",
+            "strokeWidth": 9,
+            "opacity": 1,
+            "sortingOrder": 0
+          }
+        },
+        {
+          "type": "CollisionLayer",
+          "fields": {
+            "layer": "Pickup",
+            "ignores": "Player"
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "tunnel-1",
+      "tag": "Tunnel",
+      "name": "Tunnel entrance",
+      "type": "Tunnel",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 705,
+          "y": 0
+        },
+        "rotation": 90,
+        "size": {
+          "x": 92,
+          "y": 92
+        }
+      },
+      "fields": {
+        "linkId": "a",
+        "role": "entrance",
+        "exitSpeed": 280,
+        "radius": 26,
+        "ballLayer": "Player"
+      },
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 0,
+        "isStatic": true,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": true,
+        "isInverse": false
+      },
+      "components": [
+        {
+          "type": "SpriteRenderer",
+          "fields": {
+            "imagePath": "./assets/art/tunnel.png",
+            "frameWidth": 48,
+            "frameHeight": 48,
+            "frameCount": 2,
+            "columns": 2,
+            "fps": 0,
+            "loop": true,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "opacity": 1,
+            "pixelArt": true,
+            "sortingOrder": 2
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 14,
+            "lifetime": 0.6,
+            "speed": 90,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 120,
+            "gravity": 0,
+            "shape": "circle",
+            "startSize": 9,
+            "endSize": 2,
+            "startColor": "#c9ccd6",
+            "endColor": "#8a8d96",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "tunnel-2",
+      "tag": "Tunnel",
+      "name": "Tunnel exit",
+      "type": "Tunnel",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 995,
+          "y": 440
+        },
+        "rotation": -90,
+        "size": {
+          "x": 92,
+          "y": 92
+        }
+      },
+      "fields": {
+        "linkId": "a",
+        "role": "exit",
+        "exitSpeed": 280,
+        "radius": 26,
+        "ballLayer": "Enemy"
+      },
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 0,
+        "isStatic": true,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": true,
+        "isInverse": false
+      },
+      "components": [
+        {
+          "type": "SpriteRenderer",
+          "fields": {
+            "imagePath": "./assets/art/tunnel.png",
+            "frameWidth": 48,
+            "frameHeight": 48,
+            "frameCount": 2,
+            "columns": 2,
+            "fps": 0,
+            "loop": true,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "opacity": 1,
+            "pixelArt": true,
+            "sortingOrder": 2
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 14,
+            "lifetime": 0.6,
+            "speed": 90,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 120,
+            "gravity": 0,
+            "shape": "circle",
+            "startSize": 9,
+            "endSize": 2,
+            "startColor": "#c9ccd6",
+            "endColor": "#8a8d96",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "ball",
+      "tag": "Ball",
+      "name": "Ball",
+      "type": "Ball",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 60,
+          "y": 0
+        },
+        "rotation": 0,
+        "size": {
+          "x": 24,
+          "y": 24
+        }
+      },
+      "fields": {
+        "radius": 12,
+        "maxDragDistance": 180,
+        "powerScale": 0.1,
+        "pickRadius": 40,
+        "restSpeed": 5,
+        "sinkDuration": 0.4,
+        "shotCount": 0
+      },
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 1,
+        "isStatic": false,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": false,
+        "isInverse": false
+      },
+      "components": [
+        {
+          "type": "SpriteRenderer",
+          "fields": {
+            "imagePath": "./assets/art/ball.png",
+            "frameWidth": 16,
+            "frameHeight": 16,
+            "frameCount": 1,
+            "columns": 1,
+            "fps": 0,
+            "loop": true,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "opacity": 1,
+            "pixelArt": true,
+            "sortingOrder": 3
+          }
+        },
+        {
+          "type": "Animator",
+          "fields": {
+            "clips": [
+              {
+                "name": "sink",
+                "duration": 0.45,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.size.x",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 24,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.45,
+                        "v": 0,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "transform.size.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 24,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.45,
+                        "v": 0,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "SpriteRenderer.opacity",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 1,
+                        "ease": "linear"
+                      },
+                      {
+                        "t": 0.3,
+                        "v": 1,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.45,
+                        "v": 0.2,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              },
+              {
+                "name": "tunnelIn",
+                "duration": 0.25,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.size.x",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 24,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.25,
+                        "v": 0,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "transform.size.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 24,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.25,
+                        "v": 0,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              },
+              {
+                "name": "tunnelOut",
+                "duration": 0.3,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.size.x",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 0,
+                        "ease": "backOut"
+                      },
+                      {
+                        "t": 0.3,
+                        "v": 24,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "transform.size.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 0,
+                        "ease": "backOut"
+                      },
+                      {
+                        "t": 0.3,
+                        "v": 24,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              }
+            ],
+            "asset": "",
+            "defaultClip": "",
+            "playOnStart": false,
+            "speed": 1
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 8,
+            "lifetime": 0.5,
+            "speed": 55,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 360,
+            "gravity": 0,
+            "shape": "circle",
+            "startSize": 7,
+            "endSize": 1,
+            "startColor": "#e9e4d0",
+            "endColor": "#e9e4d0",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "hole",
+      "tag": "Hole",
+      "name": "Hole",
+      "type": "Hole",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1620,
+          "y": 440
+        },
+        "rotation": 0,
+        "size": {
+          "x": 38.4,
+          "y": 38.4
+        }
+      },
+      "fields": {},
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 1000,
+        "isStatic": true,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": true,
+        "isInverse": false
+      },
+      "components": [
+        {
+          "type": "SpriteRenderer",
+          "fields": {
+            "imagePath": "./assets/art/hole.png",
+            "frameWidth": 24,
+            "frameHeight": 24,
+            "frameCount": 2,
+            "columns": 2,
+            "fps": 0,
+            "loop": true,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "opacity": 1,
+            "pixelArt": true,
+            "sortingOrder": 0
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 18,
+            "lifetime": 1.1,
+            "speed": 300,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 150,
+            "gravity": 420,
+            "shape": "square",
+            "startSize": 8,
+            "endSize": 4,
+            "startColor": "#ffd166",
+            "endColor": "#ff9f1c",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 18,
+            "lifetime": 1.1,
+            "speed": 300,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 150,
+            "gravity": 420,
+            "shape": "square",
+            "startSize": 8,
+            "endSize": 4,
+            "startColor": "#ef476f",
+            "endColor": "#c77dff",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        },
+        {
+          "type": "ParticleEmitter",
+          "fields": {
+            "emitting": false,
+            "rate": 20,
+            "burstCount": 18,
+            "lifetime": 1.1,
+            "speed": 300,
+            "speedVariation": 0.5,
+            "angle": -90,
+            "spread": 150,
+            "gravity": 420,
+            "shape": "square",
+            "startSize": 8,
+            "endSize": 4,
+            "startColor": "#7ec8e3",
+            "endColor": "#ffffff",
+            "fade": true,
+            "worldSpace": true,
+            "maxParticles": 300,
+            "sortingOrder": 5
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "flag",
+      "tag": "Flag",
+      "name": "Flag",
+      "type": "Flag",
+      "parentKey": "hole",
+      "transform": {
+        "position": {
+          "x": 1622,
+          "y": 443
+        },
+        "rotation": 0,
+        "size": {
+          "x": 32,
+          "y": 60
+        }
+      },
+      "fields": {}
+    },
+    {
+      "sceneKey": "decor-1",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -188.64,
+          "y": 149.35
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-2",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 351.58,
+          "y": 736.71
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-3",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1441.17,
+          "y": 680.64
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-4",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 904.63,
+          "y": 670.51
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-5",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1402.19,
+          "y": 174.58
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-6",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -31.63,
+          "y": -294.25
+        },
+        "rotation": 0,
+        "size": {
+          "x": 70,
+          "y": 70
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-7",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1327.34,
+          "y": 735.36
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-8",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1101.51,
+          "y": 705.85
+        },
+        "rotation": 0,
+        "size": {
+          "x": 70,
+          "y": 70
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-9",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 122.48,
+          "y": 674.98
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-10",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1560.64,
+          "y": 118.68
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-11",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 301.35,
+          "y": 339.54
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-12",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 644.29,
+          "y": 385.94
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-13",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 404.37,
+          "y": 568.23
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-14",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1977.92,
+          "y": -121.36
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-15",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1632.99,
+          "y": -14.58
+        },
+        "rotation": 0,
+        "size": {
+          "x": 90,
+          "y": 90
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-16",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1438.99,
+          "y": 46.68
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-17",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1735.58,
+          "y": 50.83
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-18",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1585.0,
+          "y": -301.52
+        },
+        "rotation": 0,
+        "size": {
+          "x": 70,
+          "y": 70
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-19",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1986.1,
+          "y": 507.81
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-20",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -117.88,
+          "y": -212.69
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-21",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -198.99,
+          "y": 480.67
+        },
+        "rotation": 0,
+        "size": {
+          "x": 90,
+          "y": 90
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-22",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -144.88,
+          "y": 730.47
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-23",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1861.58,
+          "y": 113.2
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-24",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -188.39,
+          "y": -305.61
+        },
+        "rotation": 0,
+        "size": {
+          "x": 80,
+          "y": 80
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-25",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": -69.94,
+          "y": 349.92
+        },
+        "rotation": 0,
+        "size": {
+          "x": 60,
+          "y": 60
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-26",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 552.93,
+          "y": 491.06
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-27",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1342.01,
+          "y": 114.37
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-28",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 518.48,
+          "y": 589.55
+        },
+        "rotation": 0,
+        "size": {
+          "x": 54,
+          "y": 54
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-29",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 130.34,
+          "y": 402.56
+        },
+        "rotation": 0,
+        "size": {
+          "x": 66,
+          "y": 66
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-30",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 285.93,
+          "y": 509.31
+        },
+        "rotation": 0,
+        "size": {
+          "x": 70,
+          "y": 70
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "camera",
+      "tag": "MainCamera",
+      "name": "Camera",
+      "type": "MainCamera",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 850.0,
+          "y": 200.0
+        },
+        "rotation": 0,
+        "size": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Camera",
+          "fields": {
+            "zoom": 0.881
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "shotcount",
+      "tag": "ShotCount",
+      "name": "ShotCount",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 74.5,
+          "y": 34
+        },
+        "rotation": 0,
+        "size": {
+          "x": 120,
+          "y": 40
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Stroke 0",
+            "fontFamily": "Chewy",
+            "fontSize": 20,
+            "color": "#ffffff",
+            "align": "center",
+            "sortingOrder": 2
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "#1f2a24",
+            "imagePath": "",
+            "cornerRadius": 8,
+            "sortingOrder": 1
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "par",
+      "tag": "Par",
+      "name": "Par",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 206.5,
+          "y": 34
+        },
+        "rotation": 0,
+        "size": {
+          "x": 120,
+          "y": 40
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Par 3",
+            "fontFamily": "Chewy",
+            "fontSize": 20,
+            "color": "#ffffff",
+            "align": "center",
+            "sortingOrder": 1
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "#26332c",
+            "imagePath": "",
+            "cornerRadius": 8,
+            "sortingOrder": 0
+          }
+        },
+        {
+          "type": "LevelInfo",
+          "fields": {
+            "title": "Hole 6: Tunnel Vision",
+            "par": 3,
+            "nextScene": "hole7"
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "title",
+      "tag": "Title",
+      "name": "Title",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 960,
+          "y": 34
+        },
+        "rotation": 0,
+        "size": {
+          "x": 520,
+          "y": 40
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Hole 6 \u00b7 Tunnel Vision",
+            "fontFamily": "Chewy",
+            "fontSize": 20,
+            "color": "#ffffff",
+            "align": "center",
+            "sortingOrder": 2
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "#1f2a24",
+            "imagePath": "",
+            "cornerRadius": 8,
+            "sortingOrder": 1
+          }
+        }
+      ]
+    }
+  ]
+}

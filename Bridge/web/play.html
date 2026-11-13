@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Piston Game View</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #111; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; outline: none; background: #000; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="importmap">{"imports": {"@piston/": "/__piston__/engine/"}}</script>
+<script type="module" src="/__piston__/play.js"></script>
+</body>
+</html>

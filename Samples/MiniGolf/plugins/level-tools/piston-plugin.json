@@ -1,0 +1,13 @@
+{
+  "name": "Level Tools",
+  "id": "com.piston.leveltools",
+  "version": "1.0.0",
+  "main": "index.js",
+  "contributes": {
+    "menus": [
+      { "title": "Snap Selection to Grid (16)", "command": "snap" },
+      { "title": "Align Selection Left", "command": "alignLeft" },
+      { "title": "Space Selection Evenly (Horizontal)", "command": "distribute" }
+    ]
+  }
+}

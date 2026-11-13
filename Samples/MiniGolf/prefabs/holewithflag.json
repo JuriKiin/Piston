@@ -1,0 +1,47 @@
+{
+  "sceneKey": "added:1a0c1230bee5223fbb",
+  "tag": "Hole",
+  "name": null,
+  "type": "Hole",
+  "parentKey": null,
+  "transform": {
+    "position": {
+      "x": 688,
+      "y": 352.04569587345753
+    },
+    "rotation": 0,
+    "size": {
+      "x": 32,
+      "y": 32
+    }
+  },
+  "fields": {},
+  "components": [
+    {
+      "type": "ShapeRenderer",
+      "fields": {
+        "shape": "circle",
+        "color": "#ffffff",
+        "strokeColor": "#000000",
+        "strokeWidth": 2,
+        "radius": 16,
+        "sortingOrder": 0
+      }
+    }
+  ],
+  "rigidbody": {
+    "velocity": {
+      "x": 0,
+      "y": 0
+    },
+    "angularVelocity": 0,
+    "mass": 1000,
+    "isStatic": true,
+    "useGravity": false
+  },
+  "collider": {
+    "enabled": true,
+    "isTrigger": true,
+    "isInverse": false
+  }
+}
