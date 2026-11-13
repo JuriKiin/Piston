@@ -2,6 +2,7 @@ import { Vector2 } from "@piston/Physics/Vector2.js";
 import { Animator } from "@piston/Animator.js";
 import { Light2D } from "@piston/Light2D.js";
 import { BeamRenderer } from "@piston/BeamRenderer.js";
+import { RopeChain } from "@piston/RopeChain.js";
 import { EntityRegistry } from "@piston/EntityRegistry.js";
 import Constants from "@piston/static/Constants.js";
 import { Actor, Game, Layers, addBody, mkSprite, CX, CY, ARENA_R, ART, clamp, lerp, rand, angleTo } from "./Game.js";
@@ -85,6 +86,7 @@ export class BossSegment extends Enemy {
         this.main = this.tail ? this.addComponent(mkSprite('boss_tail.png', { fw: 256, fh: 256, frames: 4, fps: 8, order: 5 })) : this.addComponent(mkSprite('boss_seg.png', { fw: 256, fh: 256, frames: 4, fps: 0, order: 5 }));
         this.light = this.addComponent(new Light2D({ color: '#ffb02e', radius: 190, intensity: 0.55 }));
         addBody(this, 46, Layers.Enemy, () => {});
+        this.rigidbody.physicsMaterial = { friction: 0.25, bounciness: 0 }; // damps the velocity the chain constraint leaves on a link
         Game.enemies.add(this);
     }
     onPlayerContact() { /* the boss does not die on contact; the player just takes damage */ }
@@ -122,7 +124,7 @@ export class Warden extends Enemy {
     static description = 'The boss: a segmented serpent. Break its segments to wear it down, then destroy the head.';
     constructor() {
         super(); this.tag = 'Warden'; this.order = 24; this.hp = 60; this.maxHp = 60; this.state = 'enter'; this.t = 0; this.u = 0; this.heading = 0; this.phase = 1;
-        this.history = []; this.segments = []; this.attackT = 3; this.ringT = 7; this.laserT = 9; this.snarl = 0; this.aggression = 1; this.score = 5000; this.contactDamage = 1;
+        this.segments = []; this.attackT = 3; this.ringT = 7; this.laserT = 9; this.snarl = 0; this.aggression = 1; this.score = 5000; this.contactDamage = 1;
     }
     start() {
         this.transform.position = new Vector2(CX, CY); this.transform.size = new Vector2(10, 10);
@@ -133,8 +135,10 @@ export class Warden extends Enemy {
             { path: 'transform.size.x', keys: [{ t: 0, v: 10, ease: 'backOut' }, { t: 1.4, v: 200 }] }, { path: 'transform.size.y', keys: [{ t: 0, v: 10, ease: 'backOut' }, { t: 1.4, v: 200 }] }], events: [] }] }));
         this.body = addBody(this, 62, Layers.Enemy, () => {});
         this.body.collider.enabled = false;
-        for (let i = 0; i < 260; i++) this.history.push({ x: CX, y: CY });
         for (let i = 0; i < SEGMENTS + 1; i++) this.segments.push(Game.spawn(new BossSegment(this, i, i === SEGMENTS)));
+        // The body is an engine RopeChain: head pinned (the figure-eight path moves it), links only pull when stretched, so the chain starts stacked on the head and unfurls as it moves away.
+        this.chain = this.addComponent(new RopeChain({ segmentLength: SPACING, rope: true, iterations: 8, pinFirst: true, stiffness: 1 }));
+        this.chain.setLinks([this, ...this.segments]);
         Game.enemies.add(this); Game.boss = this;
         sfx.play('roar', { minGap: 0 }); Game.shake(0.9);
         Fx.ring(CX, CY, { color: 'amb', from: 40, to: 900, time: 1.0 }); Fx.ring(CX, CY, { color: 'mag', from: 20, to: 600, time: 0.8 });
@@ -175,10 +179,7 @@ export class Warden extends Enemy {
         if (Math.hypot(mx, my) > 0.01) this.heading = lerpAngle(this.heading, Math.atan2(my, mx), Math.min(1, 10 * dt));
         // heading and aim: the head snaps its look toward the player a little while attacking
         this.transform.rotation = this.heading * 180 / Math.PI;
-        // history for the chain
-        const last = this.history[this.history.length - 1];
-        if (Math.hypot(p.x - last.x, p.y - last.y) >= 5) { this.history.push({ x: p.x, y: p.y }); if (this.history.length > 900) this.history.shift(); }
-        this.layoutChain(dt);
+        this.orientChain();
         this.light.intensity = 0.8 + 0.3 * Math.sin(performance.now() / 200) + (this.snarl > 0 ? 0.8 : 0);
         if (this.state !== 'fight' || !pl || pl.dead || Game.state !== 'boss') return;
         // attacks
@@ -187,23 +188,14 @@ export class Warden extends Enemy {
         if (this.phase >= 2 && this.ringT <= 0) { this.ring(); this.ringT = rand(6, 8) / this.aggression; }
         if (this.phase >= 3 && this.laserT <= 0 && !(this.laser && !this.laser.destroyed)) { this.laser = Game.spawn(new Laser(this, Math.random() < 0.5 ? 1 : -1)); this.laserT = rand(9, 12); }
     }
-    layoutChain(dt) {
-        const alive = this.alive;
-        let need = (alive.length + 1) * SPACING, acc = 0, idx = this.history.length - 1, j = 0;
-        // walk back along the history, dropping a segment each SPACING of path length
-        let prev = this.history[idx], target = SPACING;
-        for (let i = idx - 1; i >= 0 && j < alive.length; i--) {
-            const h = this.history[i]; acc += Math.hypot(h.x - prev.x, h.y - prev.y); prev = h;
-            if (acc >= target) {
-                const seg = alive[j], sp = seg.transform.position, k = 1 - Math.exp(-16 * dt);
-                const ahead = this.history[Math.min(idx, i + 4)];
-                seg.heading = Math.atan2(ahead.y - h.y, ahead.x - h.x);
-                sp.x += (h.x - sp.x) * k; sp.y += (h.y - sp.y) * k;
-                seg.transform.rotation = seg.heading * 180 / Math.PI;
-                j++; target += SPACING;
-            }
+    /** The RopeChain moves the segments (see start); this just turns each one to face the link ahead of it. */
+    orientChain() {
+        let prev = this;
+        for (const seg of this.alive) {
+            const sp = seg.transform.position, pp = prev.transform.position;
+            if (Math.hypot(pp.x - sp.x, pp.y - sp.y) > 0.5) { seg.heading = Math.atan2(pp.y - sp.y, pp.x - sp.x); seg.transform.rotation = seg.heading * 180 / Math.PI; }
+            prev = seg;
         }
-        void need;
     }
     fan() {
         const p = this.transform.position, pl = Game.player, a = angleTo(p, pl.position), n = this.phase === 1 ? 5 : 7, spread = 0.9;

@@ -34,6 +34,8 @@ import { SceneRegistry } from "./SceneRegistry.js";
 import "./PhysicsMaterialComponent.js";
 import "./TrailRenderer.js";
 import "./BeamRenderer.js";
+import "./DistanceJoint.js";
+import "./RopeChain.js";
 import { PostProcess } from "./PostProcess.js";
 import { Light2D } from "./Light2D.js";
 import "./LevelFlow.js";
@@ -621,6 +623,11 @@ export default class GameLoop {
             this.entities = this.entities.filter(e => !e.destroyed);
         }
         this.activeColliders = this.entities.filter(e => e.active !== false && e.rigidbody && e.rigidbody.collider && e.rigidbody.collider.enabled);
+        this.joints = [];
+        for (const e of this.entities) {
+            if (!e._hasJoints || e.active === false) continue;
+            for (const c of e.components) if (c.enabled && typeof c.solve === 'function') this.joints.push(c);
+        }
     }
 
     /** One fixed simulation step: update every entity, resolve collisions, settle rest state. `DELTA_TIME` is the step length times `timeScale`. */
@@ -637,6 +644,9 @@ export default class GameLoop {
                 entity.update();
             }
         }
+
+        // Joints and chains: after everyone has moved, before collisions, in entity order (so the result is deterministic).
+        for (const joint of this.joints) joint.solve();
 
         this.physicsEngine.handleCollisions(this.activeColliders);
 

@@ -63,3 +63,21 @@ b.destroy();                              // for a pooled entity this returns it
 Rules: put all per-use setup in `onAcquire` (position, velocity, lifetime, `trail.clear()`), never rely on the constructor; a pool belongs to one scene and forgets its entities when the scene is rebuilt; an entity returned during a collision pass is skipped for the rest of that step, but a callback already running can still see it, so check `other.active` if it matters. `pool.dispose()` really destroys everything.
 
 Measured on Neon Warden (see `docs/showcase/neon-warden/ENGINE-ROUND-1.md`): the pool removes per-shot construction cost and allocation; the per-entity update cost is unchanged, and a switched-off entity costs a flag check per frame.
+
+## Joints and chains
+Joints keep entities a set distance apart. They are solved once per simulation step, after every entity has moved and before collisions, so a scene with joints plays back identically every run.
+
+**DistanceJoint** (add it in the Inspector, or `entity.addComponent(new DistanceJoint({ length: 120 }))`) keeps its entity `length` pixels from another entity or a fixed point. A reference cannot be an Inspector field, so give it the other entity from a script: `joint.target = other;` or leave `target` empty and set **Anchor X/Y** (a world point, e.g. the pivot of a pendulum).
+
+| Field | Effect |
+|---|---|
+| Length | rest distance. `joint.useCurrentLength()` copies the present distance |
+| Stiffness (0-1) | share of the error removed per pass; 1 is rigid, lower is springy |
+| Damping (0-1) | removes relative speed along the joint |
+| Rope | only pulls when stretched; slack is allowed (a rope), off means a rod |
+| Pin this entity | the joint never moves this entity |
+| Iterations | passes per step; more is stiffer when several joints share a body |
+
+**RopeChain** joins a list of entities end to end: `chain.setLinks([head, a, b, c])`. Fields: **Segment length**, **Stiffness**, **Iterations**, **Damping**, **Rope**, **Pin first link**, and **Draw line** (strokes a polyline through the links, with **Line width** and **Line color**). Links are normal entities: give them sprites and colliders. A destroyed or switched-off link is skipped and the chain closes up. With **Rope** on, links stacked on one point unfurl as the head moves away.
+
+Which bodies move: an entity **without a Rigidbody** (moved by your script), a **static** Rigidbody, or a pinned entity is never moved by a joint. Any other Rigidbody is moved in proportion to its inverse mass and keeps the correction as velocity, so hanging chains swing. Rigidbody velocities are per step, so gravity on a dynamic link is a per-step value too. The joints are centre-to-centre (no rotation, no anchor offsets) and distance-only: there is no angular limit or hinge.
