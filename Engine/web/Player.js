@@ -36,7 +36,10 @@ export async function startGame({ canvas, startScene, data } = {}) {
 
     const loop = new GameLoop(canvas, scene, { devTools: false });
     window.Piston = { gameLoop: loop, scenes: loop.scenes, audio: loop.audio }; // game code reaches the loop through this (ENGINE_GUIDE section 4)
+    // Release pages start with a "Made with Piston" splash (Templates/export/web/splash.html) that sets this promise. The scene loads
+    // underneath while it plays; the game starts running once both are done. Absent in development builds and the editor.
     await loop.start();
+    if (globalThis.__PISTON_SPLASH__) await globalThis.__PISTON_SPLASH__;
     loop.play();
     return loop;
 }

@@ -447,6 +447,10 @@ enum SelfTest {
               && has("assets/flag.svg") && gameFiles.first.map { releaseHTML.contains($0) } == true,
               "\(rel.errors.map(\.text)) files \(gameFiles) html refs bundle \(gameFiles.first.map { releaseHTML.contains($0) } ?? false)")
         check("obfuscation never renames properties (scene data keys must survive)", gameJS.contains("obf:false"))
+        check("Release pages start with the Made with Piston splash (inlined, so the release stays one bundle); Development pages do not, and the Player waits for it",
+              releaseHTML.contains("id=\"pstn-splash\"") && releaseHTML.contains("__PISTON_SPLASH__") && !releaseHTML.contains("{{SPLASH}}")
+              && !pageHTML.contains("pstn-splash") && !pageHTML.contains("{{SPLASH}}")
+              && ((try? String(contentsOf: EditorModel.engineRoot().appendingPathComponent("Player.js"), encoding: .utf8))?.contains("__PISTON_SPLASH__") ?? false))
 
         // 17c. The real toolchain (esbuild + javascript-obfuscator), when it is installed
         if BuildSystem.toolchainURL("esbuild") != nil && BuildSystem.toolchainURL("obfuscator.js") != nil {

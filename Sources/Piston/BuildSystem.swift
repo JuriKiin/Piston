@@ -290,6 +290,12 @@ final class BuildSystem: @unchecked Sendable {
         return html
     }
 
+    /// The "Made with Piston" splash that every Release build starts with (Templates/export/web/splash.html, inlined into the page so the single-bundle
+    /// release stays one script plus index.html). Development builds do not show it.
+    private func madeWithPistonSplash() -> String {
+        (try? String(contentsOf: templatesRoot.appendingPathComponent("export/web/splash.html"), encoding: .utf8)) ?? ""
+    }
+
     private func jsArray(_ items: [String]) -> String { "[" + items.map { jsString($0) }.joined(separator: ", ") + "]" }
 
     private func jsString(_ s: String) -> String {
@@ -324,7 +330,7 @@ final class BuildSystem: @unchecked Sendable {
         try main.write(to: out.appendingPathComponent("main.js"), atomically: true, encoding: .utf8)
 
         let head = "<script type=\"importmap\">{\"imports\": {\"@piston/\": \"./engine/\"}}</script>"
-        try template(["TITLE": title, "HEAD": head, "ENTRY": "./main.js"])
+        try template(["TITLE": title, "HEAD": head, "ENTRY": "./main.js", "SPLASH": ""])
             .write(to: out.appendingPathComponent("index.html"), atomically: true, encoding: .utf8)
         try writeManifest(into: out, mode: .development, start: v.start)
     }
@@ -417,7 +423,7 @@ final class BuildSystem: @unchecked Sendable {
         let bundleName = "game.\(hash).js"
         try code.write(to: out.appendingPathComponent(bundleName), atomically: true, encoding: .utf8)
         try copyProjectContent(into: out, only: ["assets"])
-        try template(["TITLE": title, "HEAD": "", "ENTRY": "./\(bundleName)"])
+        try template(["TITLE": title, "HEAD": "", "ENTRY": "./\(bundleName)", "SPLASH": madeWithPistonSplash()])
             .write(to: out.appendingPathComponent("index.html"), atomically: true, encoding: .utf8)
         try writeManifest(into: out, mode: .release, start: v.start)
     }
