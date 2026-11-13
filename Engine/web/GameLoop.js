@@ -31,6 +31,9 @@ import "./Audio/AudioSource.js";
 import { audio } from "./Audio/AudioService.js";
 import { SceneRegistry } from "./SceneRegistry.js";
 import "./PhysicsMaterialComponent.js";
+import "./TrailRenderer.js";
+import { PostProcess } from "./PostProcess.js";
+import { Light2D } from "./Light2D.js";
 import "./LevelFlow.js";
 import "./UIElement.js";
 import "./UI/Text.js";
@@ -64,9 +67,13 @@ export default class GameLoop {
         audio.installAutoUnlock();
         this.scenes = new SceneManager(this); // scene flow: Piston.scenes.next() / load(id) / restart()
         this.entities = [];
-        this.spatialGrid = new SpatialGrid(canvas.width, canvas.height, 10000, true, this.ctx); // Cell size of 50
+        this.spatialGrid = new SpatialGrid(canvas.width, canvas.height, 128, false, this.ctx); // 128 px cells. Was 10000 (one cell for the whole world = O(n^2) broadphase) with debug-grid drawing always on.
         this.lastTime = null;
         this.physicsEngine = new PhysicsEngine(this.spatialGrid);
+
+        // Multiplies the simulated time of every frame (DELTA_TIME): 1 = normal, 0 = frozen (hit-stop), 0.3 = slow motion. Animators, particles and trails follow it;
+        // rigidbody velocities are per-frame, so physics bodies are not scaled by it. Reset to 1 whenever a scene loads.
+        this.timeScale = 1;
 
         this.playState = PlayState.Edit;
         this._editSnapshot = null;
@@ -176,6 +183,7 @@ export default class GameLoop {
         const resumeState = this.playState;
 
         this.scene = scene;
+        this.timeScale = 1; // a new scene never starts frozen or in slow motion
         setLastSceneId(scene.id); // so a page refresh resumes here instead of main.js's hardcoded default
         this.entities = [];
         this.playState = PlayState.Edit;
@@ -568,7 +576,7 @@ export default class GameLoop {
         // Clamp so a stall (tab switch, GC pause, breakpoint) can't produce one huge delta -
         // uncapped, a single frame's movement could tunnel a fast entity clean through a wall.
         // 0 while not playing so anything reading DELTA_TIME during Edit/Paused sees no elapsed time.
-        Constants.DELTA_TIME = isPlaying ? Math.min(rawDeltaTime, Constants.MAX_DELTA_TIME) : 0;
+        Constants.DELTA_TIME = isPlaying ? Math.min(rawDeltaTime, Constants.MAX_DELTA_TIME) * Math.max(0, this.timeScale) : 0;
 
         // --- Entity Lifecycle ---
         // Sweep entities destroyed during the previous frame. Deferred to frame start (rather
@@ -627,15 +635,36 @@ export default class GameLoop {
         const worldEntities = this.entities.filter(e => e instanceof Entity && (e.space ?? 'World') === 'World').sort(byOrder);
         const screenEntities = this.entities.filter(e => e instanceof Entity && e.space === 'Screen').sort(byOrder);
 
-        this.ctx.save();
-        if (this.camera) {
-            this.camera.apply(this.ctx, this.canvas.width, this.canvas.height);
+        const post = this.#activePostProcess();
+        if (post) {
+            // World -> offscreen scene canvas -> lights, bloom, grade, vignette -> main canvas. Screen-space UI is drawn afterwards, unaffected.
+            const { scene } = post.surfaces(this.canvas.width, this.canvas.height);
+            const sctx = scene.ctx;
+            sctx.setTransform(1, 0, 0, 1, 0, 0);
+            sctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            if (this.scene?.backgroundColor) { sctx.fillStyle = this.scene.backgroundColor; sctx.fillRect(0, 0, this.canvas.width, this.canvas.height); }
+            Light2D.collected.length = 0; Light2D.collecting = true;
+            sctx.save();
+            if (this.camera) this.camera.apply(sctx, this.canvas.width, this.canvas.height);
+            for (const entity of worldEntities) entity.render(sctx);
+            sctx.restore();
+            Light2D.collecting = false;
+            post.render(this.ctx, { width: this.canvas.width, height: this.canvas.height, lights: Light2D.collected, applyCamera: (c) => this.camera?.apply(c, this.canvas.width, this.canvas.height) });
+            this.ctx.save();
+            if (this.camera) this.camera.apply(this.ctx, this.canvas.width, this.canvas.height);
+            this.devToolbar?.inspector?.renderGizmo(this.ctx, 'World');
+            this.ctx.restore();
+        } else {
+            this.ctx.save();
+            if (this.camera) {
+                this.camera.apply(this.ctx, this.canvas.width, this.canvas.height);
+            }
+            for (const entity of worldEntities) {
+                entity.render(this.ctx);
+            }
+            this.devToolbar?.inspector?.renderGizmo(this.ctx, 'World');
+            this.ctx.restore();
         }
-        for (const entity of worldEntities) {
-            entity.render(this.ctx);
-        }
-        this.devToolbar?.inspector?.renderGizmo(this.ctx, 'World');
-        this.ctx.restore();
 
         this.ctx.save();
         for (const entity of screenEntities) {
@@ -643,6 +672,15 @@ export default class GameLoop {
         }
         this.devToolbar?.inspector?.renderGizmo(this.ctx, 'Screen');
         this.ctx.restore();
+    }
+
+    /** The first enabled PostProcess component in the scene that would change the picture, or null (then the plain, cheaper render path is used). */
+    #activePostProcess() {
+        for (const entity of this.entities) {
+            if (entity.destroyed) continue;
+            for (const c of entity.components ?? []) if (c instanceof PostProcess && c.enabled && c.active) return c;
+        }
+        return null;
     }
 
     /** The current mouse position in world space, accounting for the active camera (if any). */

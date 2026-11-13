@@ -2,6 +2,8 @@ import { Component } from './Component.js';
 import { ComponentRegistry } from './ComponentRegistry.js';
 import { ImageCache } from './ImageCache.js';
 import Constants from './static/Constants.js';
+import { BLEND_MODES, compositeOp } from './Rendering/Blend.js';
+import { silhouetteImage } from './Rendering/Surface.js';
 
 /**
  * Draws a static image, or plays a frame animation sliced out of a spritesheet, sized from the
@@ -29,6 +31,10 @@ export class SpriteRenderer extends Component {
         { key: 'anchorX', label: 'Anchor X', type: 'number', animatable: true },
         { key: 'anchorY', label: 'Anchor Y', type: 'number', animatable: true },
         { key: 'opacity', label: 'Opacity', type: 'number', animatable: true },
+        // How the sprite is combined with what is already drawn: additive makes glows and light shafts, screen is a softer additive, multiply darkens (shadows).
+        { key: 'blendMode', label: 'Blend mode', type: 'select', options: BLEND_MODES },
+        // 0..1 white overlay on the sprite's own shape: animate it for a hit flash.
+        { key: 'flash', label: 'Flash (0-1)', type: 'number', animatable: true },
         // Pixel art stays crisp when scaled up (no smoothing). Leave off for photos and smooth art.
         { key: 'pixelArt', label: 'Pixel art (no smoothing)', type: 'checkbox' },
         // Lower draws first (further back) - see Entity.getSortingOrder(), which every renderer
@@ -52,7 +58,7 @@ export class SpriteRenderer extends Component {
      */
     constructor({
         imagePath = '', frameWidth = 0, frameHeight = 0, frameCount = 1,
-        columns = null, fps = 12, loop = true, anchorX = 0.5, anchorY = 0.5, sortingOrder = 0,
+        columns = null, fps = 12, loop = true, anchorX = 0.5, anchorY = 0.5, sortingOrder = 0, blendMode = 'normal',
     } = {}) {
         super();
         this._imagePath = imagePath;
@@ -68,6 +74,8 @@ export class SpriteRenderer extends Component {
         this.anchorY = anchorY;
         this.sortingOrder = sortingOrder;
         this.opacity = 1; // 0..1
+        this.blendMode = blendMode;
+        this.flash = 0; // 0..1 white overlay (hit flash)
         this.pixelArt = false;
 
         this.currentFrame = 0;
@@ -129,7 +137,10 @@ export class SpriteRenderer extends Component {
 
     draw(ctx) {
         if (!this.loaded) return;
+        const baseAlpha = ctx.globalAlpha;
+        const previousOp = ctx.globalCompositeOperation;
         ctx.globalAlpha *= this.opacity;
+        if (this.blendMode && this.blendMode !== 'normal') ctx.globalCompositeOperation = compositeOp(this.blendMode);
         ctx.imageSmoothingEnabled = !this.pixelArt;
         if (!this.pixelArt) ctx.imageSmoothingQuality = 'high'; // large sprites are scaled down: use the good filter
 
@@ -139,16 +150,23 @@ export class SpriteRenderer extends Component {
         const dx = -w * this.anchorX;
         const dy = -h * this.anchorY;
 
+        this.#blit(ctx, this.image, dx, dy, w, h);
+        if (this.flash > 0.001) {
+            ctx.globalAlpha = baseAlpha * this.opacity * Math.min(1, this.flash);
+            if (this.blendMode === 'normal') ctx.globalCompositeOperation = 'source-over'; // additive/screen sprites flash in their own mode
+            this.#blit(ctx, silhouetteImage(this.image), dx, dy, w, h);
+        }
+        ctx.globalCompositeOperation = previousOp;
+        ctx.globalAlpha = baseAlpha;
+    }
+
+    #blit(ctx, image, dx, dy, w, h) {
         if (this.frameWidth && this.frameHeight) {
             const col = this.currentFrame % this.columns;
             const row = Math.floor(this.currentFrame / this.columns);
-            ctx.drawImage(
-                this.image,
-                col * this.frameWidth, row * this.frameHeight, this.frameWidth, this.frameHeight,
-                dx, dy, w, h
-            );
+            ctx.drawImage(image, col * this.frameWidth, row * this.frameHeight, this.frameWidth, this.frameHeight, dx, dy, w, h);
         } else {
-            ctx.drawImage(this.image, dx, dy, w, h);
+            ctx.drawImage(image, dx, dy, w, h);
         }
     }
 }

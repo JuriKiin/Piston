@@ -1,0 +1,192 @@
+{
+ "version": 3,
+ "sceneName": "Arena",
+ "backgroundColor": "#05071a",
+ "deletedKeys": [],
+ "entities": [
+  {
+   "sceneKey": "camera",
+   "tag": "MainCamera",
+   "name": "Camera",
+   "type": "MainCamera",
+   "parentKey": null,
+   "transform": {
+    "position": {
+     "x": 960,
+     "y": 540
+    },
+    "rotation": 0,
+    "size": {
+     "x": 20,
+     "y": 20
+    }
+   },
+   "fields": {},
+   "components": [
+    {
+     "type": "Camera",
+     "fields": {
+      "zoom": 1
+     }
+    },
+    {
+     "type": "PostProcess",
+     "fields": {
+      "bloom": 0.7,
+      "bloomThreshold": 0.62,
+      "bloomRadius": 3,
+      "ambient": "#808cbe",
+      "lightStrength": 0.3,
+      "exposure": 1.0,
+      "contrast": 1.06,
+      "saturation": 1.12,
+      "tintColor": "#6a5cff",
+      "tintAmount": 0.0,
+      "vignette": 0.45,
+      "vignetteColor": "#000000",
+      "chromatic": 0.8,
+      "flashColor": "#ffffff",
+      "flashAmount": 0
+     }
+    }
+   ]
+  },
+  {
+   "sceneKey": "floor",
+   "tag": "Prop",
+   "name": "Floor",
+   "type": "Prop",
+   "parentKey": null,
+   "transform": {
+    "position": {
+     "x": 960,
+     "y": 540
+    },
+    "rotation": 0,
+    "size": {
+     "x": 1920,
+     "y": 1080
+    }
+   },
+   "fields": {},
+   "components": [
+    {
+     "type": "SpriteRenderer",
+     "fields": {
+      "imagePath": "./assets/art/floor.jpg",
+      "frameWidth": 0,
+      "frameHeight": 0,
+      "frameCount": 1,
+      "columns": 1,
+      "fps": 0,
+      "loop": true,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "opacity": 1,
+      "blendMode": "normal",
+      "flash": 0,
+      "pixelArt": false,
+      "sortingOrder": -10
+     }
+    }
+   ]
+  },
+  {
+   "sceneKey": "arena-glow",
+   "tag": "Prop",
+   "name": "Arena edge glow",
+   "type": "Prop",
+   "parentKey": null,
+   "transform": {
+    "position": {
+     "x": 960,
+     "y": 540
+    },
+    "rotation": 0,
+    "size": {
+     "x": 1000,
+     "y": 1000
+    }
+   },
+   "fields": {},
+   "components": [
+    {
+     "type": "SpriteRenderer",
+     "fields": {
+      "imagePath": "./assets/art/arena_glow.png",
+      "frameWidth": 0,
+      "frameHeight": 0,
+      "frameCount": 1,
+      "columns": 1,
+      "fps": 0,
+      "loop": true,
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "opacity": 0.7,
+      "blendMode": "additive",
+      "flash": 0,
+      "pixelArt": false,
+      "sortingOrder": -9
+     }
+    },
+    {
+     "type": "Animator",
+     "fields": {
+      "clips": [
+       {
+        "name": "pulse",
+        "duration": 3.2,
+        "loop": true,
+        "tracks": [
+         {
+          "path": "SpriteRenderer.opacity",
+          "keys": [
+           {
+            "t": 0,
+            "v": 0.45,
+            "ease": "easeInOut"
+           },
+           {
+            "t": 1.6,
+            "v": 0.95,
+            "ease": "easeInOut"
+           },
+           {
+            "t": 3.2,
+            "v": 0.45
+           }
+          ]
+         }
+        ],
+        "events": []
+       }
+      ],
+      "asset": "",
+      "defaultClip": "pulse",
+      "playOnStart": true,
+      "speed": 1
+     }
+    }
+   ]
+  },
+  {
+   "sceneKey": "director",
+   "tag": "Director",
+   "name": "Director",
+   "type": "Director",
+   "parentKey": null,
+   "transform": {
+    "position": {
+     "x": 960,
+     "y": 540
+    },
+    "rotation": 0,
+    "size": {
+     "x": 20,
+     "y": 20
+    }
+   },
+   "fields": {}
+  }
+ ]
+}

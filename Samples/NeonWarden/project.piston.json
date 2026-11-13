@@ -1,0 +1,12 @@
+{
+  "piston": 1,
+  "name": "Neon Warden",
+  "platform": "web",
+  "engine": "0.1.0",
+  "entry": "/scripts/GameContent.js",
+  "scenesDir": "scenes",
+  "startScene": "title",
+  "resolution": { "width": 1920, "height": 1080 },
+  "sampleRevision": 1,
+  "sceneOrder": ["title", "arena"]
+}
