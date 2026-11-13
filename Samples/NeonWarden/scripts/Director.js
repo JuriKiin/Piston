@@ -7,16 +7,17 @@ import { PostProcess } from "@piston/PostProcess.js";
 import { EntityRegistry } from "@piston/EntityRegistry.js";
 import Constants from "@piston/static/Constants.js";
 import input from "@piston/static/Input.js";
-import { Actor, Game, setupCollisionMatrix, mkSprite, CX, CY, ARENA_R, ART, clamp, lerp, rand } from "./Game.js";
+import Debug from "@piston/static/Debug.js";
+import { Actor, Game, Taps, setupCollisionMatrix, mkSprite, CX, CY, ARENA_R, ART, clamp, lerp, rand } from "./Game.js";
 import { Player } from "./Player.js";
 import { Drone, Turret } from "./Enemies.js";
 import { Warden } from "./Boss.js";
-import { Orb } from "./Projectiles.js";
+import { Orb, Bolt } from "./Projectiles.js";
 import { Fx } from "./Fx.js";
 import { sfx, music } from "./Sfx.js";
 
 const FONT = 'sans-serif';
-const AMBIENT_DARK = [0.03, 0.04, 0.09], AMBIENT = [0.36, 0.42, 0.62];
+const AMBIENT_DARK = [0.03, 0.04, 0.09], AMBIENT = [0.5, 0.55, 0.74];
 const hex = (v) => '#' + v.map(x => Math.round(clamp(x, 0, 1) * 255).toString(16).padStart(2, '0')).join('');
 
 /** Soft drifting dust motes over the arena. */
@@ -48,8 +49,13 @@ export class Director extends Actor {
     static description = 'Runs the Neon Warden fight: waves, boss, HUD, screen effects, win and lose.';
     constructor() { super(); this.tag = 'Director'; this.order = -100; this.t = 0; this.stateT = 0; this.spawned = 0; this.spawnT = 0; this.vig = 0; this.chroma = 0; this.flashAmt = 0; this.ambientK = 0; this.lastBoss = 1; this.ended = false; }
 
-    start() {
+    // Entities spawned inside start() would be lost (the scene loader replaces the entity list afterwards), so the real setup runs on the first update.
+    start() { this.ready = false; }
+    init() {
+        this.ready = true; Taps.install(); Taps.clear();
+        Debug.showColliders = false; // the engine draws collider outlines by default
         Game.reset(); Game.director = this; setupCollisionMatrix();
+        Game.dev = { Fx, Orb, Bolt, Drone, Warden }; // for the browser console and the performance checks in docs/showcase/neon-warden/PROGRESS.md
         Game.state = 'intro';
         document.body.style.cursor = 'none';
         music.play('calm', 0.55);
@@ -88,7 +94,7 @@ export class Director extends Actor {
     say(title, sub = '', color = '#ffffff', stay = false) {
         const t = this.msg.getComponent(Text), an = this.msg.getComponent(Animator);
         t.text = title; this.sub.getComponent(Text).text = sub;
-        this.msgColor = color;
+        this.msgColor = color; this.subClear = stay ? 0 : 2.4;
         an.play(stay ? 'stay' : 'show', { restart: true });
     }
 
@@ -122,10 +128,12 @@ export class Director extends Actor {
     enter(state) { Game.state = state; this.stateT = 0; }
     update() {
         super.update();
+        if (!this.ready) this.init();
         const dt = Constants.DELTA_TIME, g = Game;
         this.updateFx(dt);
         this.updateHud(dt);
         if (dt === 0) return;
+        if (this.subClear > 0) { this.subClear -= dt; if (this.subClear <= 0) this.sub.getComponent(Text).text = ''; }
         this.t += dt; this.stateT += dt;
         if (g.state !== 'win' && g.state !== 'lose') g.elapsed += dt;
         g.comboTimer -= dt; if (g.comboTimer <= 0) g.combo = Math.max(1, g.combo - dt * 1.5);
@@ -151,8 +159,8 @@ export class Director extends Actor {
             case 'boss': break;
         }
         if (g.state === 'boss' || g.state === 'boss-warning') { /* alarm handled on entry */ }
-        if ((g.state === 'win' || g.state === 'lose') && this.stateT > 1.5 && (input.getKeyDown('KeyR') || input.getKeyDown('Enter') || (input.isMouseButtonPressed(0) && this.stateT > 2.5))) this.restart();
-        if (input.getKeyDown('Escape') && !this.leaving) { this.leaving = true; music.stop(); window.Piston.scenes.load('title'); }
+        if ((g.state === 'win' || g.state === 'lose') && this.stateT > 1.5 && (Taps.take('KeyR', 'Enter') || (Taps.take('Click') && this.stateT > 2.5))) this.restart();
+        if (Taps.take('Escape') && !this.leaving) { this.leaving = true; music.stop(); window.Piston.scenes.load('title'); }
     }
     restart() { if (this.restarting) return; this.restarting = true; sfx.play('click', { minGap: 0 }); music.stop(); window.Piston.scenes.restart(); }
 
@@ -167,7 +175,7 @@ export class Director extends Actor {
         this.enter('boss-warning'); this.bossSpawned = false;
         this.say('WARNING', 'the Warden awakens', '#ff2e88');
         sfx.play('alarm', { volume: 0.9, minGap: 0 }); this.vig = 1; this.chroma = 8;
-        for (const e of [...Game.enemies]) if (e instanceof Drone) e.die(true);
+        for (const e of [...Game.enemies]) { if (e instanceof Drone) e.die(true); else if (e instanceof Turret) e.sink(); }
     }
     onBossDead(head) {
         this.enter('win'); this.ended = true;

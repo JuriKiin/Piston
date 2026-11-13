@@ -21,14 +21,14 @@ export class Player extends Actor {
     }
     start() {
         this.transform.position = new Vector2(this.px, this.py);
-        this.transform.size = new Vector2(144, 96);
+        this.transform.size = new Vector2(176, 117);
         this.addComponent(mkSprite('shadow.png', { order: 1, opacity: 0.8 })).anchorY = 0.46;
         this.main = this.addComponent(mkSprite('ship.png', { fw: 288, fh: 192, frames: 6, fps: 0, order: 5 }));
         this.anim = this.addComponent(new SpriteAnimator({ clips: [{ name: 'idle', from: 0, to: 2, fps: 10, loop: true }, { name: 'thrust', from: 3, to: 5, fps: 16, loop: true }], defaultClip: 'idle' }));
         this.trail = this.addComponent(new TrailRenderer({ emitting: false, lifetime: 0.28, minDistance: 6, startWidth: 36, endWidth: 0, startColor: '#bff6ff', endColor: '#33e6ff', blendMode: 'additive', sortingOrder: 2, opacity: 0.8 }));
         this.exhaust = this.addComponent(new ParticleEmitter({ emitting: true, rate: 0, imagePath: ART + 'glow.png', blendMode: 'additive', angle: 180, spread: 24, speed: 150, speedVariation: 0.5, drag: 2, lifetime: 0.35,
             startSize: 22, endSize: 2, startColor: '#bff6ff', endColor: '#2090ff', fade: true, sortingOrder: 3, maxParticles: 120, worldSpace: true }));
-        this.light = this.addComponent(new Light2D({ color: '#33e6ff', radius: 300, intensity: 0.9 }));
+        this.light = this.addComponent(new Light2D({ color: '#33e6ff', radius: 230, intensity: 0.6 }));
         addBody(this, 20, Layers.Player, (e) => { if (e.contactDamage) { if (this.hurt(1, e)) e.onPlayerContact?.(this); } });
     }
     get position() { return this.transform.position; }
@@ -93,7 +93,7 @@ export class Player extends Actor {
         // look
         const blink = this.invuln > 0 && Math.floor(this.invuln * 18) % 2 === 0;
         this.main.opacity = this.dashT > 0 ? 0.75 : (blink ? 0.35 : 1);
-        this.light.intensity = 0.8 + 0.1 * Math.sin(performance.now() / 120);
+        this.light.intensity = 0.55 + 0.08 * Math.sin(performance.now() / 120);
     }
     startDash(ix, iy) {
         const dx = ix || iy ? ix : Math.cos(this.aim), dy = ix || iy ? iy : Math.sin(this.aim);

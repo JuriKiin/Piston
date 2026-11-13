@@ -9,7 +9,7 @@ import { Orb } from "./Projectiles.js";
 import { Fx, FxSprite } from "./Fx.js";
 import { sfx } from "./Sfx.js";
 
-const SEGMENTS = 10, SPACING = 70;
+const SEGMENTS = 10, SPACING = 98;
 
 /** An expanding shockwave ring that hurts the player unless they dash through it (dash = invulnerable). */
 export class ShockRing extends Actor {
@@ -124,7 +124,7 @@ export class BossSegment extends Enemy {
 export class Warden extends Enemy {
     static description = 'The boss: a segmented serpent. Break its segments to wear it down, then destroy the head.';
     constructor() {
-        super(); this.tag = 'Warden'; this.order = 24; this.hp = 40; this.maxHp = 40; this.state = 'enter'; this.t = 0; this.u = 0; this.heading = 0; this.phase = 1;
+        super(); this.tag = 'Warden'; this.order = 24; this.hp = 60; this.maxHp = 60; this.state = 'enter'; this.t = 0; this.u = 0; this.heading = 0; this.phase = 1;
         this.history = []; this.segments = []; this.attackT = 3; this.ringT = 7; this.laserT = 9; this.snarl = 0; this.aggression = 1; this.score = 5000; this.contactDamage = 1;
     }
     start() {

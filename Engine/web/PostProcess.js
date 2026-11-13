@@ -123,9 +123,7 @@ export class PostProcess extends Component {
         if (this.bloom > 0.001) {
             dst.globalCompositeOperation = 'lighter';
             dst.imageSmoothingEnabled = true; dst.imageSmoothingQuality = 'high';
-            dst.globalAlpha = Math.min(1, this.bloom * 0.9); dst.drawImage(b.eighth.canvas, 0, 0, width, height);
-            dst.globalAlpha = Math.min(1, this.bloom * 0.7); dst.drawImage(b.sixteenth.canvas, 0, 0, width, height);
-            dst.globalAlpha = Math.min(1, this.bloom * 0.5); dst.drawImage(b.quarter.canvas, 0, 0, width, height);
+            dst.globalAlpha = Math.min(1, this.bloom); dst.drawImage(b.quarter.canvas, 0, 0, width, height);   // the whole chain was folded into this one in #buildBloom
             dst.globalAlpha = 1; dst.globalCompositeOperation = 'source-over';
         }
         if (this.tintAmount > 0.001) {
@@ -173,6 +171,10 @@ export class PostProcess extends Component {
         if (r > 0) { // blur in place through a copy so the source and destination never alias
             this.#blur(b.eighth, b.channel, r); this.#blur(b.sixteenth, b.channel, r); this.#blur(b.quarter, b.channel, r * 1.5);
         }
+        // Fold the small levels upward in 2x steps (a single 16x upscale shows its blocky texels): 1/16 into 1/8, then 1/8 into 1/4.
+        const up = (from, to, alpha) => { const c = to.ctx; c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'lighter'; c.globalAlpha = alpha; c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; c.drawImage(from.canvas, 0, 0, to.canvas.width, to.canvas.height); c.restore(); };
+        up(b.sixteenth, b.eighth, 0.8);
+        up(b.eighth, b.quarter, 0.9);
     }
 
     #blur(target, scratch, radius) {

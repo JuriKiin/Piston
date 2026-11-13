@@ -14,10 +14,10 @@ def sprite(path, order, blend='normal', opacity=1):
     return {'type': 'SpriteRenderer', 'fields': {'imagePath': path, 'frameWidth': 0, 'frameHeight': 0, 'frameCount': 1, 'columns': 1, 'fps': 0, 'loop': True,
             'anchorX': 0.5, 'anchorY': 0.5, 'opacity': opacity, 'blendMode': blend, 'flash': 0, 'pixelArt': False, 'sortingOrder': order}}
 
-def camera(bloom=0.95):
+def camera(bloom=0.7):
     return ent('camera', 'MainCamera', 'Camera', 960, 540, components=[
         {'type': 'Camera', 'fields': {'zoom': 1}},
-        {'type': 'PostProcess', 'fields': {'bloom': bloom, 'bloomThreshold': 0.5, 'bloomRadius': 3, 'ambient': '#5c6a9e', 'lightStrength': 0.55, 'exposure': 1.0, 'contrast': 1.06,
+        {'type': 'PostProcess', 'fields': {'bloom': bloom, 'bloomThreshold': 0.62, 'bloomRadius': 3, 'ambient': '#808cbe', 'lightStrength': 0.3, 'exposure': 1.0, 'contrast': 1.06,
             'saturation': 1.12, 'tintColor': '#6a5cff', 'tintAmount': 0.0, 'vignette': 0.45, 'vignetteColor': '#000000', 'chromatic': 0.8, 'flashColor': '#ffffff', 'flashAmount': 0}}])
 
 def pulse_glow():

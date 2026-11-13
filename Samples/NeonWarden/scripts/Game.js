@@ -80,6 +80,9 @@ export const angleTo = (a, b) => Math.atan2(b.y - a.y, b.x - a.x);
 
 export { Layers };
 
+// Handy for the browser console and automated checks: window.NeonWarden.state, .player, .score ...
+if (typeof window !== 'undefined') window.NeonWarden = Game;
+
 /** Gives an entity a trigger circle on a collision layer (we move bodies ourselves; the engine only reports overlaps). */
 export function addBody(entity, radius, layer, onEnter) {
     const rb = new Rigidbody();
@@ -100,3 +103,16 @@ export function setupCollisionMatrix() {
     CollisionMatrix.ignore(L.Player, L.EnemyProjectile, false);
     CollisionMatrix.ignore(L.PlayerProjectile, L.Enemy, false);
 }
+
+/** Edge-triggered key/click presses (the engine's Input only reports held keys, which a quick tap can miss between frames). */
+export const Taps = {
+    set: new Set(), installed: false,
+    install() {
+        if (this.installed) return; this.installed = true;
+        window.addEventListener('keydown', (e) => { if (!e.repeat) this.set.add(e.code); });
+        window.addEventListener('mousedown', () => this.set.add('Click'));
+    },
+    /** True once per press. */
+    take(...codes) { let hit = false; for (const c of codes) if (this.set.delete(c)) hit = true; return hit; },
+    clear() { this.set.clear(); },
+};

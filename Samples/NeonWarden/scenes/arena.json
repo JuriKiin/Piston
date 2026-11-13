@@ -32,11 +32,11 @@
     {
      "type": "PostProcess",
      "fields": {
-      "bloom": 0.95,
-      "bloomThreshold": 0.5,
+      "bloom": 0.7,
+      "bloomThreshold": 0.62,
       "bloomRadius": 3,
-      "ambient": "#5c6a9e",
-      "lightStrength": 0.55,
+      "ambient": "#808cbe",
+      "lightStrength": 0.3,
       "exposure": 1.0,
       "contrast": 1.06,
       "saturation": 1.12,

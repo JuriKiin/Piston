@@ -53,7 +53,7 @@ test('bloom builds the mip chain (bright pass first) and adds it back additively
     const sizes = log.filter(l => l[0] === 'made').map(l => `${l[1]}x${l[2]}`);
     for (const s of ['960x540', '480x270', '240x135', '120x68']) assert.ok(sizes.includes(s), s);
     const bright = log.find(l => l[1] === 'drawImage' && String(l[4]).includes('contrast')); assert.ok(bright, 'a bright-pass filter draw exists');
-    const adds = d.calls.filter(c => c[0] === 'drawImage' && c[2] === 'lighter'); assert.equal(adds.length, 3);
+    const adds = d.calls.filter(c => c[0] === 'drawImage' && c[2] === 'lighter'); assert.equal(adds.length, 1, 'the mip chain is folded into one final additive draw');
     assert.ok(adds.every(c => c[4] <= 1));
 });
 test('vignette canvas is cached until its settings change', () => {
