@@ -20,6 +20,7 @@ cp -R Plugins "$RES/Plugins"
 cp -R Samples "$RES/Samples"
 rm -rf "$RES"/Samples/*/dist   # a sample's local build output (git-ignored) is never shipped or copied into a user's project
 cp Resources/Piston.icns "$RES/Piston.icns"
+cp LICENSE "$RES/LICENSE"                   # shown by the Hub footer (MIT License)
 cp -R Resources/branding "$RES/branding"   # mark SVG/PNGs for in-app use (icon: python3 Tools/branding/make_icon.py)
 # Release-build tools (esbuild binary + obfuscator). The binary must stay executable and signed.
 cp -R Toolchain "$RES/Toolchain"

@@ -10,6 +10,30 @@ enum Brand {
     static var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev" }
 }
 
+/// Files that ship inside the app bundle (bundle.sh copies Resources/branding and LICENSE). Nil when running unbundled.
+enum BrandResources {
+    static func image(_ name: String) -> NSImage? {
+        Bundle.main.resourceURL.flatMap { NSImage(contentsOf: $0.appendingPathComponent("branding/\(name)")) }
+    }
+    static var license: String {
+        Bundle.main.resourceURL.flatMap { try? String(contentsOf: $0.appendingPathComponent("LICENSE"), encoding: .utf8) }
+            ?? "Piston is released under the MIT License. See the LICENSE file in the repository."
+    }
+}
+
+/// The license text, shown from the Hub footer.
+struct LicenseSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("MIT License").font(.headline)
+            ScrollView { Text(BrandResources.license).font(.system(.callout, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
+            HStack { Spacer(); Button("Done") { dismiss() }.keyboardShortcut(.defaultAction) }
+        }
+        .padding(20).frame(width: 560, height: 420)
+    }
+}
+
 /// The piston glyph: a cylinder open at the top (a U), a head inside it, and a rod with a cap. Fits its rect (aspect 56:80).
 struct PistonMark: Shape {
     func path(in rect: CGRect) -> Path {
@@ -118,5 +142,27 @@ enum BrandShots {
             await shot(PistonSplash(fixedTime: t), NSSize(width: 900, height: 560), "splash-\(Int(t * 100)).png")
         }
         await shot(HubView(model: model), NSSize(width: 1100, height: 700), "hub.png")
+    }
+}
+
+/// Buttons for the dark brand panel: a solid orange primary, a quiet outlined secondary, and a text link.
+struct BrandButtonStyle: ButtonStyle {
+    enum Kind { case primary, secondary, link(Color) }
+    var kind: Kind
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        switch kind {
+        case .primary:
+            configuration.label.font(.body.weight(.semibold)).foregroundStyle(.white)
+                .padding(.vertical, 9).frame(maxWidth: .infinity)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Brand.orange.opacity(pressed ? 0.8 : 1)))
+        case .secondary:
+            configuration.label.font(.body).foregroundStyle(.white)
+                .padding(.vertical, 9).frame(maxWidth: .infinity)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(pressed ? 0.16 : 0.09)))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.14)))
+        case .link(let c):
+            configuration.label.foregroundStyle(c.opacity(pressed ? 0.6 : 1))
+        }
     }
 }
