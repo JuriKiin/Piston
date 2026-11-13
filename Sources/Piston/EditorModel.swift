@@ -82,7 +82,7 @@ final class EditorModel: ObservableObject {
     @Published var extraSelection: Set<String> = []
     @Published var collapsed: Set<String> = []
     var clipboard: [[String: Any]] = []
-    @Published var dirty = false
+    @Published var dirty = false { didSet { if dirty { scheduleRecovery() } } }
 
     // Runtime mirror (read-only copies of what the runtime reports)
     @Published var entities: [EntitySummary] = []
@@ -98,6 +98,8 @@ final class EditorModel: ObservableObject {
     @Published var selection: String?
     /// Bottom panel under the viewport.
     @Published var bottomTab: BottomTab = .console
+    /// Tests (which load scenes without a user) turn the restore prompt off.
+    var suppressRecoveryPrompt = false
     lazy var anim = AnimationEditorState(model: self)
     lazy var plugins: PluginHost = {
         let host = PluginHost(model: self)
@@ -418,6 +420,45 @@ final class EditorModel: ObservableObject {
         else { status = "Validation: \(errors.count) error\(errors.count == 1 ? "" : "s"), \(warnings.count) warning\(warnings.count == 1 ? "" : "s") (see Console)" }
     }
 
+    // MARK: Recovery snapshots
+    // While a scene has unsaved changes, a copy is written to <project>/.piston/recovery/ a few seconds after the last edit. A crash, a forced
+    // quit or a lost power cut then costs at most a few seconds of work: the next time the scene opens, Piston offers to restore it.
+
+    private var recoveryTask: Task<Void, Never>?
+
+    private func recoveryFile(_ id: String) -> URL? { projectURL?.appendingPathComponent(".piston/recovery/\(id).json") }
+
+    private func scheduleRecovery() {
+        recoveryTask?.cancel()
+        recoveryTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            if !Task.isCancelled { self?.writeRecovery() }
+        }
+    }
+
+    func writeRecovery() {
+        guard dirty, let id = currentScene, let file = recoveryFile(id), !doc.isEmpty,
+              let data = try? JSONSerialization.data(withJSONObject: doc, options: [.sortedKeys]) else { return }
+        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? data.write(to: file, options: .atomic)
+    }
+
+    func clearRecovery(for id: String) {
+        recoveryTask?.cancel()
+        if let file = recoveryFile(id) { try? FileManager.default.removeItem(at: file) }
+    }
+
+    /// The unsaved copy of a scene left by an earlier session, if it is newer than the scene file and different from it.
+    func recoveredScene(_ id: String) -> [String: Any]? {
+        guard let rec = recoveryFile(id), let scene = sceneFile(id),
+              let recDate = (try? rec.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
+              let sceneDate = (try? scene.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate, recDate > sceneDate,
+              let data = try? Data(contentsOf: rec), let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let saved = (try? Data(contentsOf: scene)).flatMap({ try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }),
+              NSDictionary(dictionary: obj) != NSDictionary(dictionary: saved) else { return nil }
+        return obj
+    }
+
     func sendScene(reloadFromDisk: Bool, id: String) async throws {
         if reloadFromDisk {
             guard let file = sceneFile(id), let data = try? Data(contentsOf: file),
@@ -440,7 +481,22 @@ final class EditorModel: ObservableObject {
         selectionBounds = nil
         if selection != nil { Task { await refreshSelectionBounds() } }
         status = "\(id) · \(entities.count) entities"
-        if reloadFromDisk { fitToScene(); Task { await validateScene(quietWhenClean: true) } }
+        if reloadFromDisk {
+            fitToScene(); Task { await validateScene(quietWhenClean: true) }
+            if !suppressRecoveryPrompt, let recovered = recoveredScene(id) {
+                let alert = NSAlert()
+                alert.messageText = "Restore unsaved changes to \(id)?"
+                alert.informativeText = "Piston found changes to this scene that were never saved (it may have quit or crashed). Restore them, or keep the saved scene?"
+                alert.addButton(withTitle: "Restore Changes")
+                alert.addButton(withTitle: "Keep Saved Scene")
+                if alert.runModal() == .alertFirstButtonReturn {
+                    doc = recovered
+                    dirty = true
+                    try? await sendScene(reloadFromDisk: false, id: id)
+                    status = "Restored unsaved changes to \(id): save to keep them"
+                } else { clearRecovery(for: id) }
+            }
+        }
     }
 
     /// Frames the scene in the viewport (editor camera only: never touches scene data). Extents come
@@ -489,6 +545,7 @@ final class EditorModel: ObservableObject {
             lastWritten[file.resolvingSymlinksInPath().path] = data // so our own write doesn't look like an external edit
             try data.write(to: file, options: .atomic)
             dirty = false
+            clearRecovery(for: id)
             status = "Saved \(id)"
         } catch {
             status = "Save failed: \(error.localizedDescription)"

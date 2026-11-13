@@ -1,24 +1,47 @@
 import SwiftUI
 import AppKit
 
+/// Quit protection: ⌘Q with unsaved work asks first, so closing Piston can never silently throw edits away.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    @MainActor static weak var model: EditorModel?
+
+    @MainActor
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let model = Self.model, model.hasAnyUnsavedWork else { return .terminateNow }
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "You have unsaved changes"
+        alert.informativeText = model.unsavedSummary + "\n\nSave them before quitting?"
+        alert.addButton(withTitle: "Save and Quit")
+        alert.addButton(withTitle: "Quit Without Saving")
+        alert.addButton(withTitle: "Cancel")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: model.saveEverything(); return .terminateNow
+        case .alertSecondButtonReturn: return .terminateNow
+        default: return .terminateCancel
+        }
+    }
+}
+
 @main
 struct PistonApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var model = EditorModel()
 
     var body: some Scene {
         WindowGroup("Piston") {
             RootView(model: model)
                 .frame(minWidth: 900, minHeight: 600)
-                .task { await bootstrap() }
+                .task { AppDelegate.model = model; await bootstrap() }
         }
         .defaultSize(width: 1400, height: 840)
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Project…") { model.showNewProject = true }.keyboardShortcut("n")
-                Button("Open Project…") { model.chooseAndOpenProject() }.keyboardShortcut("o")
+                Button("Open Project…") { if model.confirmLeavingUnsavedWork("opening another project") { model.chooseAndOpenProject() } }.keyboardShortcut("o")
                 Menu("Open Recent") {
                     ForEach(model.recents.prefix(8)) { r in
-                        Button(r.name) { model.open(r) }
+                        Button(r.name) { if model.confirmLeavingUnsavedWork("opening another project") { model.open(r) } }
                     }
                     if !model.recents.isEmpty {
                         Divider()
@@ -27,7 +50,7 @@ struct PistonApp: App {
                 }
                 .disabled(model.recents.isEmpty)
                 Divider()
-                Button("Close Project") { model.closeProject() }
+                Button("Close Project") { if model.confirmLeavingUnsavedWork("closing the project") { model.closeProject() } }
                     .keyboardShortcut("w", modifiers: [.command, .shift])
                     .disabled(model.projectURL == nil)
             }

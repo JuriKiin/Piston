@@ -19,6 +19,7 @@ enum SelfTest {
         func num(_ v: Any?) -> Double { (v as? NSNumber)?.doubleValue ?? .nan }
 
         // 1. Host + bridge boot: ES modules load over the embedded HTTP server.
+        model.suppressRecoveryPrompt = true
         let ready = await model.waitUntilReady(timeout: 20)
         if ready, model.currentScene != "hole1" { try? await model.loadScene("hole1") }   // the sample starts on its main menu; most checks need a hole
         check("runtime boots over HTTP (ES modules)", ready, "port \(model.server?.port ?? 0), scenes \(model.sceneIDs)")
@@ -267,6 +268,20 @@ enum SelfTest {
                 check("a focused Scene view does not swallow ⌘S (it is left for the menu bar), and saving then works",
                       !handled && !model.dirty, "web view handled the key: \(handled), first responder \(String(describing: window.firstResponder)), dirty \(model.dirty)")
             } else { check("a window exists to receive ⌘S", false) }
+        }
+        // Recovery: unsaved changes are snapshotted shortly after an edit, offered back if newer than the saved scene, and cleared on save.
+        do {
+            model.setTransform(ball.key, x: 777)
+            model.writeRecovery()
+            let recFile = project.appendingPathComponent(".piston/recovery/\(model.currentScene ?? "").json")
+            let written = FileManager.default.fileExists(atPath: recFile.path)
+            try? await Task.sleep(nanoseconds: 1_100_000_000) // the scene file must be older than the snapshot
+            model.writeRecovery()
+            let offered = model.currentScene.flatMap { model.recoveredScene($0) } != nil
+            model.saveScene()
+            let cleared = !FileManager.default.fileExists(atPath: recFile.path)
+            check("unsaved edits are snapshotted for recovery, offered back, and cleared on save", written && offered && cleared, "written \(written), offered \(offered), cleared \(cleared)")
+            model.setTransform(ball.key, x: 123); model.saveScene()
         }
         check("Save (⌘S on the Scene tab) writes the scene", abs(sx - 123) < 0.01 && !model.dirty && !model.activeIsDirty, "x \(sx)")
 

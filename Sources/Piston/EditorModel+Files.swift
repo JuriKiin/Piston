@@ -79,6 +79,23 @@ extension EditorModel {
 
     var hasUnsaved: Bool { dirty || textDocs.values.contains { $0.isDirty } }
 
+    /// Everything that would be lost on quit: the scene, open text files, and sprites being painted.
+    var hasAnyUnsavedWork: Bool { hasUnsaved || PixelDoc.open.values.contains { $0.dirty } }
+
+    var unsavedSummary: String {
+        var items: [String] = []
+        if dirty, let id = currentScene { items.append("scene \(id)") }
+        items += textDocs.filter { $0.value.isDirty }.map { $0.key.lastPathComponent }.sorted()
+        items += PixelDoc.open.values.filter { $0.dirty }.map { $0.url.lastPathComponent }.sorted()
+        return "Unsaved: " + items.joined(separator: ", ")
+    }
+
+    /// Saves the scene, every open file, and every sprite.
+    func saveEverything() {
+        saveAll()
+        for doc in PixelDoc.open.values where doc.dirty { doc.save() }
+    }
+
     /// ⌘S: saves whatever the active tab is editing.
     func saveActive() {
         switch activeTab {
@@ -331,5 +348,26 @@ extension EditorModel {
             openFile(entry)
             status = "Created \(entry.deletingLastPathComponent().lastPathComponent). Run it from the Plugins menu."
         } catch { status = "Couldn't create the plugin: \(error.localizedDescription)" }
+    }
+}
+
+
+extension EditorModel {
+    /// Asks what to do with unsaved work before something that would discard it (switching scenes, closing or switching project).
+    /// Returns false if the user cancels. Saves when they choose Save.
+    func confirmLeavingUnsavedWork(_ what: String) -> Bool {
+        guard hasAnyUnsavedWork, !suppressRecoveryPrompt else { return true }
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Save your changes before \(what)?"
+        alert.informativeText = unsavedSummary
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Don't Save")
+        alert.addButton(withTitle: "Cancel")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: saveEverything(); return true
+        case .alertSecondButtonReturn: return true
+        default: return false
+        }
     }
 }

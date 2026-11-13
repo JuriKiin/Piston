@@ -211,6 +211,7 @@ struct ScenesList: View {
             ForEach(model.sceneIDs, id: \.self) { id in
                 let current = model.currentScene == id
                 Button {
+                    guard current || model.confirmLeavingUnsavedWork("switching scenes") else { return }
                     model.activeTab = .scene
                     Task { try? await model.loadScene(id) }
                 } label: {
