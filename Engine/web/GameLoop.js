@@ -33,6 +33,7 @@ import { audio } from "./Audio/AudioService.js";
 import { SceneRegistry } from "./SceneRegistry.js";
 import "./PhysicsMaterialComponent.js";
 import "./TrailRenderer.js";
+import "./BeamRenderer.js";
 import { PostProcess } from "./PostProcess.js";
 import { Light2D } from "./Light2D.js";
 import "./LevelFlow.js";

@@ -1,6 +1,7 @@
 import { Vector2 } from "@piston/Physics/Vector2.js";
 import { Animator } from "@piston/Animator.js";
 import { Light2D } from "@piston/Light2D.js";
+import { BeamRenderer } from "@piston/BeamRenderer.js";
 import { EntityRegistry } from "@piston/EntityRegistry.js";
 import Constants from "@piston/static/Constants.js";
 import { Actor, Game, Layers, addBody, mkSprite, CX, CY, ARENA_R, ART, clamp, lerp, rand, angleTo } from "./Game.js";
@@ -40,6 +41,9 @@ export class Laser extends Actor {
     start() {
         this.transform.size = new Vector2(1, 1);
         this.light = this.addComponent(new Light2D({ color: '#ff2e88', radius: 420, intensity: 0.0 }));
+        // Two beams on the same entity: a faint aim line while charging, then the textured beam itself. Both are re-aimed every update.
+        this.aimBeam = this.addComponent(new BeamRenderer({ imagePath: ART + 'aim.png', startDistance: 60, length: 1300, width: 16, blendMode: 'additive', opacity: 0, sortingOrder: 5 }));
+        this.beam = this.addComponent(new BeamRenderer({ imagePath: ART + 'beam_mag.png', startDistance: 50, length: 1400, width: 70, blendMode: 'additive', opacity: 0, sortingOrder: 6 }));
         sfx.play('charge', { volume: 0.8, minGap: 0 });
     }
     get angle() { const k = clamp((this.t - 1.0) / 2.4, 0, 1); return this.a0 + this.dir * (-1.1 + 2.2 * k); }
@@ -60,19 +64,12 @@ export class Laser extends Actor {
             }
         }
         if (this.t > 3.6) this.destroy();
-    }
-    draw(ctx) {
-        // Drawn in the entity's local space, which is unrotated: rotate to the beam angle ourselves.
-        const a = this.t < 1.0 ? this.head.heading + this.dir * -1.1 : this.angle;
-        const beam = (this.beamImg ??= (() => { const i = new window.Image(); i.src = ART + 'beam_mag.png'; return i; })());
-        const aim = (this.aimImg ??= (() => { const i = new window.Image(); i.src = ART + 'aim.png'; return i; })());
-        ctx.save(); ctx.rotate(a); ctx.globalCompositeOperation = 'lighter';
-        if (this.t < 1.0) { ctx.globalAlpha = 0.3 + 0.5 * this.t; if (aim.complete && aim.naturalWidth) ctx.drawImage(aim, 60, -8, 1300, 16); }
-        else if (beam.complete && beam.naturalWidth) {
-            const fade = this.t > 3.2 ? 1 - (this.t - 3.2) / 0.4 : 1; ctx.globalAlpha = fade; const w = 70 * (0.9 + 0.1 * Math.sin(this.t * 60));
-            ctx.drawImage(beam, 50, -w / 2, 1400, w);
-        }
-        ctx.restore();
+        // Beam visuals (the entity is unrotated, so the angles are in the entity's own space).
+        const deg = (this.t < 1.0 ? this.head.heading + this.dir * -1.1 : this.angle) * 180 / Math.PI;
+        this.aimBeam.angle = deg; this.beam.angle = deg;
+        this.aimBeam.opacity = this.t < 1.0 ? 0.3 + 0.5 * this.t : 0;
+        this.beam.opacity = this.t < 1.0 ? 0 : (this.t > 3.2 ? 1 - (this.t - 3.2) / 0.4 : 1);
+        this.beam.width = 70 * (0.9 + 0.1 * Math.sin(this.t * 60));
     }
 }
 
