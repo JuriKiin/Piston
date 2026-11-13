@@ -104,7 +104,7 @@ extension EditorModel {
 
     /// New project from the blank template (web). The engine is NOT copied in: it ships with Piston.
     @discardableResult
-    func createProject(name: String, in parent: URL) async throws -> URL {
+    func createProject(name: String, in parent: URL, options: NewProjectOptions = NewProjectOptions()) async throws -> URL {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty, !clean.contains("/"), !clean.contains(":"), !clean.hasPrefix(".") else { throw FileOpError.invalidName }
         let fm = FileManager.default
@@ -119,6 +119,7 @@ extension EditorModel {
         let text = try String(contentsOf: descriptor, encoding: .utf8)
         let escaped = clean.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
         try text.replacingOccurrences(of: "__NAME__", with: escaped).write(to: descriptor, atomically: true, encoding: .utf8)
+        try options.apply(to: dest)
 
         await openProject(dest)
         return dest
@@ -162,5 +163,40 @@ extension EditorModel {
         } catch {
             status = "Couldn't open sample: \(error.localizedDescription)"
         }
+    }
+}
+
+
+/// Starting defaults chosen in New Project > Advanced. All optional; the defaults reproduce the plain blank template.
+struct NewProjectOptions {
+    static let resolutions: [(label: String, w: Int, h: Int)] = [("800 × 600", 800, 600), ("1280 × 720", 1280, 720), ("1920 × 1080", 1920, 1080)]
+
+    var resolutionIndex = 0
+    var addCamera = false
+    /// Adds a PostProcess component to the camera with the component's own default values (so it implies a camera).
+    var postProcess = false
+
+    var isDefault: Bool { resolutionIndex == 0 && !addCamera && !postProcess }
+
+    /// Writes the chosen defaults into a freshly copied project: resolution in project.piston.json, and a MainCamera in the first scene.
+    func apply(to dest: URL) throws {
+        if isDefault { return }
+        let descriptor = dest.appendingPathComponent("project.piston.json")
+        var cfg = (try JSONSerialization.jsonObject(with: Data(contentsOf: descriptor)) as? [String: Any]) ?? [:]
+        let res = Self.resolutions[min(max(resolutionIndex, 0), Self.resolutions.count - 1)]
+        cfg["resolution"] = ["width": res.w, "height": res.h]
+        try JSONSerialization.data(withJSONObject: cfg, options: [.prettyPrinted, .sortedKeys]).write(to: descriptor)
+
+        guard addCamera || postProcess else { return }
+        let sceneURL = dest.appendingPathComponent("scenes/main.json")
+        var scene = (try JSONSerialization.jsonObject(with: Data(contentsOf: sceneURL)) as? [String: Any]) ?? [:]
+        var components: [[String: Any]] = [["type": "Camera", "fields": ["zoom": 1]]]
+        if postProcess { components.append(["type": "PostProcess", "fields": [String: Any]()]) }
+        scene["entities"] = [[
+            "sceneKey": "camera", "tag": "MainCamera", "name": "Camera", "type": "MainCamera", "parentKey": NSNull(),
+            "transform": ["position": ["x": res.w / 2, "y": res.h / 2], "rotation": 0, "size": ["x": 20, "y": 20]],
+            "fields": [String: Any](), "components": components,
+        ] as [String: Any]]
+        try JSONSerialization.data(withJSONObject: scene, options: [.prettyPrinted, .sortedKeys]).write(to: sceneURL)
     }
 }

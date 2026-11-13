@@ -290,6 +290,8 @@ final class BuildSystem: @unchecked Sendable {
         return html
     }
 
+    /// The "Made with Piston" splash that every Release build starts with (Templates/export/web/splash.html, inlined into the page so the single-bundle
+    /// release stays one script plus index.html). Development builds do not show it.
     private func jsArray(_ items: [String]) -> String { "[" + items.map { jsString($0) }.joined(separator: ", ") + "]" }
 
     private func jsString(_ s: String) -> String {
@@ -376,10 +378,12 @@ final class BuildSystem: @unchecked Sendable {
         try ("export default " + String(decoding: dataJSON, as: UTF8.self) + ";\n").write(to: work.appendingPathComponent("data.js"), atomically: true, encoding: .utf8)
 
         func copied(_ url: URL) -> String { projectCopy.appendingPathComponent(rel(url)).path }
-        var main = "import { startGame } from '@piston/Player.js';\nimport data from './data.js';\n"
+        var main = "import { startGame } from '@piston/Player.js';\nimport { installMadeWithPiston } from '@piston/MadeWithPiston.js';\nimport data from './data.js';\n"
         main += "import \(jsString(copied(v.entryURL)));\n"
         if let m = v.manifestURL { main += "import \(jsString(copied(m)));\n" }
-        main += "globalThis.__PISTON_PROJECT__ = { scenes: \(jsString("./" + scenesDir)), prefabs: './prefabs', sceneIds: \(jsArray(v.sceneOrder)), resolution: [\(resolution.width), \(resolution.height)] };\n"
+        main += "globalThis.__PISTON_PROJECT__ = { scenes: \(jsString("./" + scenesDir)), prefabs: './prefabs', sceneIds: \(jsArray(v.sceneOrder)), resolution: [\(resolution.width), \(resolution.height)], release: true };\n"
+        // "Made with Piston" is compiled into every Release bundle (and obfuscated with it), and the Player refuses to start a release without it.
+        main += "installMadeWithPiston();\n"
         main += "startGame({ canvas: document.getElementById('game'), startScene: \(jsString(v.start)), data });\n"
         try main.write(to: work.appendingPathComponent("main.js"), atomically: true, encoding: .utf8)
 

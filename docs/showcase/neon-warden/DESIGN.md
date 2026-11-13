@@ -125,10 +125,10 @@ Effort: S = under a day, M = a few days, L = a week or more. Priority: P0 blocks
 | 5 | 2D dynamic lights | lit floor from bolts/explosions | `Light2D`, `PostProcess.ambient` | M | P0 | **Built** (additive lightmap, no shadows) |
 | 6 | Trail renderer | bolt and dash streaks | `TrailRenderer` | S-M | P1 | **Built** |
 | 7 | Time scale | hit-stop, slow-mo | `Piston.gameLoop.timeScale` | S | P1 | **Built** |
-| 8 | Physics is per-frame, not per-second; no fixed time step; no CCD | speed varies with refresh rate; fast bolts can tunnel | fixed-step accumulator + dt-scaled rigidbody + swept circles | M | P0 | Documented; game moves bodies itself |
-| 9 | Joints / chains / ropes | the Warden's body | `DistanceJoint`, `RopeChain`, `SpringJoint` | L | P1 | Game-side chain follow |
+| 8 | Physics is per-frame, not per-second; no fixed time step; no CCD | speed varies with refresh rate; fast bolts can tunnel | fixed-step accumulator + dt-scaled rigidbody + swept circles | M | P0 | **Fixed step built (engine round 1)**; velocities stay per step; no CCD yet |
+| 9 | Joints / chains / ropes | the Warden's body | `DistanceJoint`, `RopeChain`, `SpringJoint` | L | P1 | **DistanceJoint + RopeChain built (engine round 1)**, boss chain ported; no SpringJoint/hinge |
 | 10 | Soft bodies | jelly boss segments, squishy pickups | verlet soft-body component | L | P2 | Documented only |
-| 11 | Object pooling | bolts/fx spawn and die constantly (GC hitches) | `Pool` service + `entity.recycle()` | M | P1 | Game-side pool |
+| 11 | Object pooling | bolts/fx spawn and die constantly (GC hitches) | `Pool` service + `entity.recycle()` | M | P1 | **`EntityPool` built (engine round 1)**, used for bolts, orbs, bursts |
 | 12 | Texture atlas packing | many small textures, batching | build-step atlas + `SpriteRenderer.atlasFrame` | M | P1 | Not built |
 | 13 | WebGL2 renderer backend | shaders, real HDR bloom, normal-mapped lights, phones | `Renderer` service (see BENCHMARKS.md) | L | P1 (P0 for mobile) | Designed only |
 | 14 | Normal-mapped / rotation-aware sprite lighting | baked light rotates with sprites | `SpriteRenderer.normalMap` + shader lights | L | P2 | Needs 13 |
@@ -138,10 +138,10 @@ Effort: S = under a day, M = a few days, L = a week or more. Priority: P0 blocks
 | 18 | Entity render loop allocates per frame | filter+sort per frame, per-entity component copy | cached sorted lists, dirty flags | M | P1 | Measured, documented |
 | 19 | Sprite tint / colour multiply | team colours, damage colours | `SpriteRenderer.tint` | S | P1 | Use baked variants |
 | 20 | Audio: music layering, looping with loop points, bus ducking, reverb | boss music switch, ducking | `audio.crossfade`, `setBusDuck` | S-M | P1 | Game-side |
-| 22 | Entities spawned from `start()` are silently lost (the scene loader replaces the entity list after instantiation) | the Director had to move its setup into its first `update()` | `onSceneReady()` hook, or make `GameLoop.add` safe during load | S | P0 | Game-side workaround |
-| 23 | Input reports held keys only; a fast tap between frames is missed; no gamepad | restart/confirm keys | `input.wasPressed/wasReleased` edges, gamepad axes | S | P1 | Game-side `Taps` helper |
-| 24 | `Debug.showColliders` defaults to true, so a built game draws collider outlines | looked like green debug rings on every body | default false outside the editor | S | P0 | Game turns it off |
-| 25 | No per-entity enable/visible flag; destroyed entities are swept only at frame start | pooling, hiding | `entity.active` honoured by update/render/collide | S | P1 | Not built |
+| 22 | Entities spawned from `start()` are silently lost (the scene loader replaces the entity list after instantiation) | the Director had to move its setup into its first `update()` | `onSceneReady()` hook, or make `GameLoop.add` safe during load | S | P0 | **Fixed (engine round 1)** |
+| 23 | Input reports held keys only; a fast tap between frames is missed; no gamepad | restart/confirm keys | `input.wasPressed/wasReleased` edges, gamepad axes | S | P1 | **Edges built (engine round 1)**; no gamepad |
+| 24 | `Debug.showColliders` defaults to true, so a built game draws collider outlines | looked like green debug rings on every body | default false outside the editor | S | P0 | **Fixed (engine round 1)** |
+| 25 | No per-entity enable/visible flag; destroyed entities are swept only at frame start | pooling, hiding | `entity.active` honoured by update/render/collide | S | P1 | **Built (engine round 1)** |
 | 26 | Text has no outline/shadow/glow, bold, or letter spacing; fonts beyond generics need Google Fonts or a bundled file | HUD and titles that match the neon look | `Text.stroke`, `Text.shadow`, `Text.glow` | M | P1 | Logo baked into a PNG |
 | 27 | Particles: one texture per emitter, no sprite-sheet frames, no sub-emitters, no per-particle trails, no colour-over-life curve beyond two colours | richer explosions | `ParticleEmitter.frames`, `.trail`, gradients | M | P2 | Several emitters per effect |
 | 28 | Camera has no rotation, no built-in shake/trauma, no bounds/deadzone/multi-target | game-feel | `Camera.rotation`, shake as a generic offset layer | S | P2 | Game-side |

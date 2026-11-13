@@ -1,24 +1,35 @@
 import { Vector2 } from "@piston/Physics/Vector2.js";
 import { TrailRenderer } from "@piston/TrailRenderer.js";
 import { Light2D } from "@piston/Light2D.js";
-import { ParticleEmitter } from "@piston/ParticleEmitter.js";
+import { EntityPool } from "@piston/EntityPool.js";
 import Constants from "@piston/static/Constants.js";
 import { Actor, Game, Layers, addBody, mkSprite, CX, CY, ARENA_R, ART } from "./Game.js";
 import { Fx } from "./Fx.js";
 
-/** A player bolt: fast additive streak with a ribbon trail and a light. Hits enemies through the engine's trigger overlap. */
+/** A player bolt: fast additive streak with a ribbon trail and a light. Hits enemies through the engine's trigger overlap. Pooled: use Bolt.spawn(). */
 export class Bolt extends Actor {
-    constructor(x, y, angle, speed = 1650) {
-        super(); this.tag = 'Bolt'; this.order = 40; this.px = x; this.py = y; this.angle = angle; this.speed = speed;
-        this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.life = 1.4; this.dead = false;
+    constructor(x = 0, y = 0, angle = 0, speed = 1650) {
+        super(); this.tag = 'Bolt'; this.order = 40; this.launch(x, y, angle, speed);
     }
+    /** (Re)aims the bolt: called by the constructor and every time the pool hands a recycled bolt out. */
+    launch(x, y, angle, speed = 1650) {
+        this.px = x; this.py = y; this.angle = angle; this.speed = speed;
+        this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.life = 1.4; this.dead = false;
+        if (this.trail) { // already started: this is a recycled bolt
+            this.transform.position.x = x; this.transform.position.y = y;
+            this.transform.rotation = angle * 180 / Math.PI;
+            this.trail.clear();
+        }
+    }
+    static pool = new EntityPool({ create: () => new Bolt(), onAcquire: (b, ...a) => b.launch(...a) });
+    static spawn(x, y, angle, speed) { return Bolt.pool.acquire(x, y, angle, speed); }
     start() {
         this.transform.position = new Vector2(this.px, this.py);
         this.transform.rotation = this.angle * 180 / Math.PI;
         this.transform.size = new Vector2(84, 34);
         this.main = this.addComponent(mkSprite('bolt.png', { order: 4, blend: 'additive' }));
         this.main.anchorX = 0.85;
-        this.addComponent(new TrailRenderer({ lifetime: 0.12, minDistance: 8, startWidth: 7, endWidth: 0, startColor: '#bff6ff', endColor: '#33e6ff', blendMode: 'additive', sortingOrder: 3 }));
+        this.trail = this.addComponent(new TrailRenderer({ lifetime: 0.12, minDistance: 8, startWidth: 7, endWidth: 0, startColor: '#bff6ff', endColor: '#33e6ff', blendMode: 'additive', sortingOrder: 3 }));
         this.addComponent(new Light2D({ color: '#33e6ff', radius: 130, intensity: 0.75 }));
         addBody(this, 9, Layers.PlayerProjectile, (e) => this.onHit(e));
     }
@@ -38,11 +49,29 @@ export class Bolt extends Actor {
     }
 }
 
-/** An enemy projectile: a pulsing orb. `big` orbs are boss shots. */
+/** An enemy projectile: a pulsing orb. `big` orbs are boss shots. Pooled per look (small, amber, big): use Orb.spawn(). */
 export class Orb extends Actor {
-    constructor(x, y, angle, { speed = 330, big = false, amber = false } = {}) {
-        super(); this.tag = 'Orb'; this.order = 38; this.px = x; this.py = y; this.big = big; this.amber = amber;
+    constructor(x = 0, y = 0, angle = 0, { speed = 330, big = false, amber = false } = {}) {
+        super(); this.tag = 'Orb'; this.order = 38; this.big = big; this.amber = amber; this.launch(x, y, angle, speed);
+    }
+    /** (Re)aims the orb: called by the constructor and every time the pool hands a recycled orb out. */
+    launch(x, y, angle, speed = 330) {
+        this.px = x; this.py = y;
         this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.life = 6; this.dead = false;
+        if (this.main) { // already started: this is a recycled orb
+            this.transform.position.x = x; this.transform.position.y = y;
+            this.main.currentFrame = 0;
+        }
+    }
+    static pools = new Map();
+    static cap = Infinity; // most orbs alive at once; spawn() returns null beyond it (set per boss phase so a fight always leaves room to move)
+    static get live() { let n = 0; for (const p of Orb.pools.values()) n += p.liveCount; return n; }
+    static spawn(x, y, angle, { speed = 330, big = false, amber = false } = {}) {
+        if (Orb.live >= Orb.cap) return null;
+        const key = `${big}|${amber}`;
+        let pool = Orb.pools.get(key);
+        if (!pool) Orb.pools.set(key, pool = new EntityPool({ create: () => new Orb(0, 0, 0, { big, amber }), onAcquire: (o, ...a) => o.launch(...a) }));
+        return pool.acquire(x, y, angle, speed);
     }
     start() {
         const sz = this.big ? 92 : 50;

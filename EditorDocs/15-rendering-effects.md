@@ -3,7 +3,7 @@
 Glow, light and screen effects, all built from components you add in the Inspector and animate in the Animation panel. They are drawn by the engine's Canvas2D renderer: 8-bit colour, no shaders, and they run at 60 fps at 1920 x 1080 on a Mac with thousands of glowing sprites on screen.
 
 ## Blend modes
-**SpriteRenderer**, **ParticleEmitter** and **TrailRenderer** have a **Blend mode**:
+**SpriteRenderer**, **ParticleEmitter**, **TrailRenderer** and **BeamRenderer** have a **Blend mode**:
 
 | Mode | What it does | Use it for |
 |---|---|---|
@@ -22,6 +22,25 @@ In **ParticleEmitter** set **Image** to a white soft-edged texture and the parti
 
 ## Trails
 **TrailRenderer** draws a ribbon behind a moving entity: each frame it remembers the entity's position (every **Min distance** pixels) for **Lifetime** seconds and fills a tapering ribbon through the points, **Start width** at the entity to **End width** at the tail, colour **Start color** to **End color**, fading out if **Fade out** is on. Call `trail.clear()` when you teleport or reuse an entity so no streak jumps across the screen.
+
+## Beams
+**BeamRenderer** draws a straight strip: a laser, an aim line, a searchlight, a tractor beam. It only draws; hit tests, damage and impact effects are yours.
+
+| Field | Effect |
+|---|---|
+| Aim mode | `length-angle`: a ray from the entity (**Start distance** out, **Length** long, pointing **Angle** degrees from the entity's own rotation). `from-to`: a segment between **From X/Y** and **To X/Y** |
+| Width | thickness in pixels |
+| Texture | an image stretched along the beam (a soft strip that is bright in the middle works best). With no texture the beam is filled with **Color**, fading to transparent across the width |
+| Blend mode | `additive` (the default) for lasers |
+| Glow, Glow width | `Glow` 0 is off; above 0 a second, wider pass (**Glow width** times the width) is drawn behind it at that strength |
+| Opacity | 0 hides it; animate it for telegraphs and fade-outs |
+
+All points are in the entity's local space, so the beam turns and moves with its entity: put it on a turret and it points where the turret faces. Length, angle, width, color, glow, opacity and the from/to points are animatable, so a charge-up is one Animator clip. Set `beam.length` or `beam.angle` from a script to aim it every frame; `beam.geometry()` returns `{ x0, y0, angle, length }` (local space, angle in radians) for hit tests.
+
+```js
+const laser = entity.addComponent(new BeamRenderer({ imagePath: './assets/beam.png', length: 1400, width: 70, glow: 0.5 }));
+laser.angle = 35; laser.opacity = 1;
+```
 
 ## PostProcess: whole-screen effects
 Add a **PostProcess** component to any entity (the camera's is a good home). It processes the world, then the HUD is drawn on top untouched. Everything starts off, and a PostProcess that changes nothing costs nothing.
@@ -43,7 +62,7 @@ Every number and colour above is animatable. Limits of the Canvas2D version: col
 A soft round light with **Color**, **Radius** and **Intensity**, centred on its entity (plus an offset). Put one on a bullet, a torch, an explosion or an engine flame. Lights only show once a PostProcess in the scene has a dark **Ambient**; they add up where they overlap. Around 150 lights at once is fine.
 
 ## Time scale
-`Piston.gameLoop.timeScale` multiplies the simulated time of every frame: `0` freezes the game for a few frames (hit-stop), `0.3` is slow motion, `1` is normal. Animators, particles, trails and anything that reads `Constants.DELTA_TIME` follow it. Rigidbody velocities are per frame and are not scaled. A scene load resets it to 1.
+`Piston.gameLoop.timeScale` multiplies the simulated time of every fixed step (see [Simulation, input and the entity pipeline](doc:17-simulation-and-pipeline)): `0` freezes the game for a few frames (hit-stop), `0.3` is slow motion, `1` is normal. Animators, particles, trails and anything that reads `Constants.DELTA_TIME` follow it. Rigidbody velocities are per step and are not scaled. A scene load resets it to 1.
 
 ```js
 const loop = window.Piston.gameLoop;

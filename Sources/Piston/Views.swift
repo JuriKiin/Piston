@@ -670,6 +670,7 @@ struct ConsoleView: View {
 /// The window's root: the Hub when no project is open, otherwise the editor.
 struct RootView: View {
     @ObservedObject var model: EditorModel
+    @State private var showSplash = PistonSplash.enabled
 
     var body: some View {
         Group {
@@ -682,6 +683,11 @@ struct RootView: View {
         .navigationTitle(model.projectURL == nil ? "Piston" : model.projectName)
         .navigationSubtitle(model.projectURL == nil ? "" : (model.currentScene ?? ""))
         .sheet(isPresented: $model.showNewProject) { NewProjectSheet(model: model) }
+        .overlay {
+            if showSplash {
+                PistonSplash { withAnimation(.easeOut(duration: 0.15)) { showSplash = false } }.ignoresSafeArea().transition(.opacity)
+            }
+        }
     }
 }
 

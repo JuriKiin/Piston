@@ -1,6 +1,7 @@
 import { Vector2 } from "@piston/Physics/Vector2.js";
 import { Animator } from "@piston/Animator.js";
 import { Light2D } from "@piston/Light2D.js";
+import { BeamRenderer } from "@piston/BeamRenderer.js";
 import { EntityRegistry } from "@piston/EntityRegistry.js";
 import Constants from "@piston/static/Constants.js";
 import { Actor, Game, Layers, addBody, mkSprite, CX, CY, PLAY_R, ARENA_R, clamp, lerp, rand, angleTo } from "./Game.js";
@@ -112,6 +113,8 @@ export class Turret extends Enemy {
         this.transform.size = new Vector2(1, 1);
         this.main = this.addComponent(mkSprite('turret_head.png', { fw: 256, fh: 256, frames: 6, fps: 0, order: 5 }));
         this.light = this.addComponent(new Light2D({ color: '#ffb02e', radius: 200, intensity: 0.4 }));
+        // The aim telegraph: a strip along the turret's facing (the entity rotates, so the beam does too), grown and faded while charging.
+        this.aimBeam = this.addComponent(new BeamRenderer({ imagePath: './assets/art/aim.png', startDistance: 56, length: 120, width: 18, blendMode: 'additive', opacity: 0, sortingOrder: 9 }));
         this.addComponent(new Animator({ playOnStart: true, defaultClip: 'rise', clips: [{ name: 'rise', duration: 0.7, loop: false, tracks: [
             { path: 'transform.size.x', keys: [{ t: 0, v: 20, ease: 'backOut' }, { t: 0.7, v: 128 }] }, { path: 'transform.size.y', keys: [{ t: 0, v: 20, ease: 'backOut' }, { t: 0.7, v: 128 }] }], events: [] }] }));
         this.body = addBody(this, 44, Layers.Enemy, () => {});
@@ -143,31 +146,24 @@ export class Turret extends Enemy {
             if (this.t > 1.1) this.fireFan();
         } else if (this.state === 'fire') {
             this.main.currentFrame = this.t < 0.12 ? 5 : 0; this.charge = 0;
-            if (this.t > 0.6) { this.state = 'idle'; this.t = 0; this.cd = rand(1.0, 2.0); }
+            if (this.t > 0.6) { this.state = 'idle'; this.t = 0; this.cd = rand(1.6, 2.8); }
         }
+        const charging = this.state === 'charge';
+        this.aimBeam.length = 120 + 560 * this.charge; this.aimBeam.opacity = charging ? 0.35 + 0.5 * this.charge : 0;
     }
     fireFan() {
         this.state = 'fire'; this.t = 0;
         const p = this.transform.position, c = Math.cos(this.aim), s = Math.sin(this.aim), mx = p.x + c * 56, my = p.y + s * 56;
-        for (const off of [-0.28, 0, 0.28]) Game.spawn(new Orb(mx, my, this.aim + off, { speed: 340, amber: true }));
+        for (const off of [-0.28, 0, 0.28]) Orb.spawn(mx, my, this.aim + off, { speed: 250, amber: true });
         Fx.sprite({ x: mx, y: my, w: 140, sheet: 'spark_amb.png', frames: 6, fw: 128, fh: 128, cols: 6, fps: 40, order: 66, light: { color: '#ffb02e', radius: 240, intensity: 1.4 } });
         sfx.play('turret_shot', { volume: 0.7, minGap: 0.1 }); Game.shake(0.12);
         this.transform.position.x -= c * 8; this.transform.position.y -= s * 8; this.px = this.transform.position.x; this.py = this.transform.position.y;
-    }
-    /** The aim telegraph: a dashed line growing toward the player while charging. */
-    draw(ctx) {
-        if (this.state !== 'charge') return;
-        const img = this.aimImg ??= (() => { const i = new window.Image(); i.src = './assets/art/aim.png'; return i; })();
-        if (!img.complete || !img.naturalWidth) return;
-        const len = 120 + 560 * this.charge;
-        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.35 + 0.5 * this.charge;
-        ctx.drawImage(img, 56, -9, len, 18); ctx.restore();
     }
     sink() {
         if (this.sinking || this.dying) return; this.sinking = true;
         this.addComponent(new Animator({ playOnStart: true, defaultClip: 'sink', clips: [{ name: 'sink', duration: 0.6, loop: false, tracks: [
             { path: 'transform.size.x', keys: [{ t: 0, v: 128, ease: 'easeIn' }, { t: 0.6, v: 0 }] }, { path: 'transform.size.y', keys: [{ t: 0, v: 128, ease: 'easeIn' }, { t: 0.6, v: 0 }] }], events: [] }] }));
-        this.body.collider.enabled = false; this.lifetime = 0.65;
+        this.aimBeam.opacity = 0; this.body.collider.enabled = false; this.lifetime = 0.65;
     }
     die() {
         if (this.dying) return; this.dying = true;

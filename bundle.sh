@@ -3,6 +3,7 @@
 # the app; a game project never contains them.
 set -euo pipefail
 cd "$(dirname "$0")"
+APP_VERSION=1.0.0   # the one place the app version is set; shows up as CFBundleShortVersionString (Hub footer reads it from there)
 swift build -c release
 APP=Piston.app
 RES="$APP/Contents/Resources"
@@ -17,7 +18,10 @@ cp -R EditorDocs "$RES/EditorDocs"
 cp -R EditorWeb "$RES/EditorWeb"
 cp -R Plugins "$RES/Plugins"
 cp -R Samples "$RES/Samples"
+rm -rf "$RES"/Samples/*/dist   # a sample's local build output (git-ignored) is never shipped or copied into a user's project
 cp Resources/Piston.icns "$RES/Piston.icns"
+cp LICENSE "$RES/LICENSE"                   # shown by the Hub footer (MIT License)
+cp -R Resources/branding "$RES/branding"   # mark SVG/PNGs for in-app use (icon: python3 Tools/branding/make_icon.py)
 # Release-build tools (esbuild binary + obfuscator). The binary must stay executable and signed.
 cp -R Toolchain "$RES/Toolchain"
 chmod +x "$RES/Toolchain/esbuild"
@@ -32,7 +36,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>Piston</string>
   <key>CFBundleIconFile</key><string>Piston</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
+  <key>CFBundleShortVersionString</key><string>@APP_VERSION@</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>NSHighResolutionCapable</key><true/>
@@ -42,6 +46,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <dict><key>NSAllowsLocalNetworking</key><true/></dict>
 </dict></plist>
 PLIST
+sed -i '' "s/@APP_VERSION@/$APP_VERSION/" "$APP/Contents/Info.plist"
 xattr -cr "$APP" 2>/dev/null || true
 codesign --force --sign - "$APP"
 echo "Built $(pwd)/$APP"

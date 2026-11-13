@@ -7,8 +7,7 @@ import { PostProcess } from "@piston/PostProcess.js";
 import { EntityRegistry } from "@piston/EntityRegistry.js";
 import Constants from "@piston/static/Constants.js";
 import input from "@piston/static/Input.js";
-import Debug from "@piston/static/Debug.js";
-import { Actor, Game, Taps, setupCollisionMatrix, mkSprite, CX, CY, ARENA_R, ART, clamp, lerp, rand } from "./Game.js";
+import { Actor, Game, pressed, setupCollisionMatrix, mkSprite, CX, CY, ARENA_R, ART, clamp, lerp, rand } from "./Game.js";
 import { Player } from "./Player.js";
 import { Drone, Turret } from "./Enemies.js";
 import { Warden } from "./Boss.js";
@@ -49,20 +48,20 @@ export class Director extends Actor {
     static description = 'Runs the Neon Warden fight: waves, boss, HUD, screen effects, win and lose.';
     constructor() { super(); this.tag = 'Director'; this.order = -100; this.t = 0; this.stateT = 0; this.spawned = 0; this.spawnT = 0; this.vig = 0; this.chroma = 0; this.flashAmt = 0; this.ambientK = 0; this.lastBoss = 1; this.ended = false; }
 
-    // Entities spawned inside start() would be lost (the scene loader replaces the entity list afterwards), so the real setup runs on the first update.
-    start() { this.ready = false; }
-    init() {
-        this.ready = true; Taps.install(); Taps.clear();
-        Debug.showColliders = false; // the engine draws collider outlines by default
+    // The engine keeps entities spawned from start(), so the whole setup runs here. Side effects that must only happen while the game runs (music, hiding the cursor) wait for the first update.
+    start() {
         Game.reset(); Game.director = this; setupCollisionMatrix();
         Game.dev = { Fx, Orb, Bolt, Drone, Warden }; // for the browser console and the performance checks in docs/showcase/neon-warden/PROGRESS.md
         Game.state = 'intro';
-        document.body.style.cursor = 'none';
-        music.play('calm', 0.55);
         for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + 0.4, r = 120 + (i % 2) * 220; Game.spawn(new DustEmitter(CX + Math.cos(a) * r, CY + Math.sin(a) * r)); }
         Game.player = Game.spawn(new Player(CX, CY + 120));
         this.buildHud();
         this.say('WARDEN ONLINE', 'survive the swarm', '#33e6ff');
+    }
+    begin() {
+        this.begun = true;
+        document.body.style.cursor = 'none';
+        music.play('calm', 0.55);
         sfx.play('spawn', { minGap: 0 }); Fx.ring(CX, CY + 120, { color: 'cyan', from: 40, to: 380, time: 0.7 });
     }
     onDestroy() { document.body.style.cursor = ''; }
@@ -128,10 +127,13 @@ export class Director extends Actor {
     enter(state) { Game.state = state; this.stateT = 0; }
     update() {
         super.update();
-        if (!this.ready) this.init();
+        if (!this.begun) this.begin();
         const dt = Constants.DELTA_TIME, g = Game;
         this.updateFx(dt);
         this.updateHud(dt);
+        // Input edges last one step, so read them before the hit-stop early return below.
+        if ((g.state === 'win' || g.state === 'lose') && this.stateT > 1.5 && (pressed('KeyR', 'Enter') || (pressed('Click') && this.stateT > 2.5))) this.restart();
+        if (pressed('Escape') && !this.leaving) { this.leaving = true; music.stop(); window.Piston.scenes.load('title'); }
         if (dt === 0) return;
         if (this.subClear > 0) { this.subClear -= dt; if (this.subClear <= 0) this.sub.getComponent(Text).text = ''; }
         this.t += dt; this.stateT += dt;
@@ -159,8 +161,6 @@ export class Director extends Actor {
             case 'boss': break;
         }
         if (g.state === 'boss' || g.state === 'boss-warning') { /* alarm handled on entry */ }
-        if ((g.state === 'win' || g.state === 'lose') && this.stateT > 1.5 && (Taps.take('KeyR', 'Enter') || (Taps.take('Click') && this.stateT > 2.5))) this.restart();
-        if (Taps.take('Escape') && !this.leaving) { this.leaving = true; music.stop(); window.Piston.scenes.load('title'); }
     }
     restart() { if (this.restarting) return; this.restarting = true; sfx.play('click', { minGap: 0 }); music.stop(); window.Piston.scenes.restart(); }
 

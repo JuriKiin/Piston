@@ -447,6 +447,10 @@ enum SelfTest {
               && has("assets/flag.svg") && gameFiles.first.map { releaseHTML.contains($0) } == true,
               "\(rel.errors.map(\.text)) files \(gameFiles) html refs bundle \(gameFiles.first.map { releaseHTML.contains($0) } ?? false)")
         check("obfuscation never renames properties (scene data keys must survive)", gameJS.contains("obf:false"))
+        check("Release builds compile the Made with Piston splash into the bundle (not the page); Development pages have none, and the Player waits for it",
+              ((try? String(contentsOf: stubs.appendingPathComponent("main.js"), encoding: .utf8)) ?? "").contains("installMadeWithPiston();") && !releaseHTML.contains("pstn-splash") && !releaseHTML.contains("{{SPLASH}}")
+              && !pageHTML.contains("pstn-splash") && !pageHTML.contains("{{SPLASH}}")
+              && ((try? String(contentsOf: EditorModel.engineRoot().appendingPathComponent("Player.js"), encoding: .utf8))?.contains("__PISTON_SPLASH__") ?? false))
 
         // 17c. The real toolchain (esbuild + javascript-obfuscator), when it is installed
         if BuildSystem.toolchainURL("esbuild") != nil && BuildSystem.toolchainURL("obfuscator.js") != nil {
@@ -460,7 +464,8 @@ enum SelfTest {
             check("Release with the real toolchain: bundled, minified and obfuscated, with no readable sources shipped",
                   rr2.ok && realBundle != nil && realSize > 150_000 && rr2.messages.contains { $0.text.hasPrefix("Obfuscated (medium)") }
                   && !FileManager.default.fileExists(atPath: realOut.appendingPathComponent("engine").path)
-                  && !FileManager.default.fileExists(atPath: realOut.appendingPathComponent("scenes").path),
+                  && !FileManager.default.fileExists(atPath: realOut.appendingPathComponent("scenes").path)
+                  && !(((try? String(contentsOf: realOut.appendingPathComponent("index.html"), encoding: .utf8)) ?? "").contains("pstn-splash")),
                   "\(rr2.messages.map(\.text).filter { !$0.contains("isn't imported") }.joined(separator: " | "))")
         }
 
@@ -476,6 +481,22 @@ enum SelfTest {
               model.projectName == "Selftest Game" && model.currentScene == "main" && model.entities.isEmpty
               && created.map { !FileManager.default.fileExists(atPath: $0.appendingPathComponent("engine").path) } == true,
               "name \(model.projectName), scene \(model.currentScene ?? "-"), entities \(model.entities.count)")
+        do {
+            // New Project > Advanced: starting defaults land in the descriptor and the first scene.
+            let tmp = parent.appendingPathComponent("advanced-defaults")
+            try FileManager.default.copyItem(at: EditorModel.templatesRoot().appendingPathComponent("blank"), to: tmp)
+            var o = NewProjectOptions(); o.resolutionIndex = 2; o.postProcess = true
+            try o.apply(to: tmp)
+            let cfg = try JSONSerialization.jsonObject(with: Data(contentsOf: tmp.appendingPathComponent("project.piston.json"))) as? [String: Any]
+            let sc = try JSONSerialization.jsonObject(with: Data(contentsOf: tmp.appendingPathComponent("scenes/main.json"))) as? [String: Any]
+            let ents = sc?["entities"] as? [[String: Any]] ?? []
+            let comps = (ents.first?["components"] as? [[String: Any]])?.compactMap { $0["type"] as? String } ?? []
+            let ppFields = ((ents.first?["components"] as? [[String: Any]])?.last?["fields"] as? [String: Any])?.count ?? -1
+            let res = cfg?["resolution"] as? [String: Any]
+            check("New Project advanced defaults set the size, a MainCamera and a bare PostProcess component",
+                  (res?["width"] as? Int) == 1920 && comps == ["Camera", "PostProcess"] && ppFields == 0,
+                  "res \(String(describing: res)), comps \(comps)")
+        } catch { check("New Project advanced defaults set the size, a MainCamera and a bare PostProcess component", false, "\(error)") }
         check("the project appears in Recent Projects", model.recents.first?.name == "Selftest Game" && model.recents.first?.platform == "web")
         if let created {
             let readyBeforeOrb = model.readyCount
@@ -923,6 +944,36 @@ enum SelfTest {
 
         model.closeProject()
         check("Close Project returns to the Hub", model.projectURL == nil && model.recents.count >= 1)
+
+        // The second built-in sample, Neon Warden: it must open from a copy, never carry an engine copy, and boot and run in the game runtime.
+        let nwSource = EditorModel.samplesRoot().appendingPathComponent("NeonWarden")
+        let nwTmp = FileManager.default.temporaryDirectory.appendingPathComponent("piston-selftest-nw-\(UUID().uuidString)")
+        let nwCopied = (try? FileManager.default.copyItem(at: nwSource, to: nwTmp)) != nil
+        check("Neon Warden ships with the app (project file, scenes, scripts, no build output)", nwCopied
+              && FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("project.piston.json").path)
+              && FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("scenes/arena.json").path)
+              && FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("scripts/Director.js").path)
+              && !FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("dist").path))
+        if nwCopied {
+            model.persistRecents = false
+            await model.openProject(nwTmp)
+            let nwReady = await model.waitUntilReady(timeout: 20)
+            check("Neon Warden opens: both scenes are found and the start scene loads", nwReady && model.sceneIDs.contains("title") && model.sceneIDs.contains("arena") && !model.entities.isEmpty,
+                  "scenes \(model.sceneIDs), entities \(model.entities.count)")
+            check("the engine is not copied into the project", !FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("engine").path)
+                  && !FileManager.default.fileExists(atPath: nwTmp.appendingPathComponent("GameLoop.js").path))
+            let nwErrorsBefore = model.logs.filter { $0.level == "error" }.count
+            await model.play()
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            let nw = await model.playInfo()
+            // The title director spawns its logo, prompt and dust from start(), so a running game has more live entities than the scene file holds.
+            check("Neon Warden boots in the runtime and its scripts spawn entities from start()", nw?.playState == "playing" && (nw?.frames ?? 0) > 5 && (nw?.entityCount ?? 0) > model.entities.count,
+                  "state \(nw?.playState ?? "?"), frames \(nw?.frames ?? -1), game entities \(nw?.entityCount ?? -1) vs scene \(model.entities.count)", needsDisplay: true)
+            check("Neon Warden raised no runtime errors", model.logs.filter { $0.level == "error" }.count == nwErrorsBefore,
+                  model.logs.filter { $0.level == "error" }.suffix(3).map { $0.text }.joined(separator: " | "))
+            model.stopGame()
+            model.closeProject()
+        }
 
         print(failures == 0 ? "\nALL CHECKS PASSED" : "\n\(failures) CHECK(S) FAILED")
         return failures == 0

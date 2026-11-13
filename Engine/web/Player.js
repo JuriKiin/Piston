@@ -36,7 +36,12 @@ export async function startGame({ canvas, startScene, data } = {}) {
 
     const loop = new GameLoop(canvas, scene, { devTools: false });
     window.Piston = { gameLoop: loop, scenes: loop.scenes, audio: loop.audio }; // game code reaches the loop through this (ENGINE_GUIDE section 4)
+    // Release builds start with the "Made with Piston" splash (MadeWithPiston.js, compiled into the bundle), which leaves a promise here. The scene
+    // loads underneath while it plays; the game starts running once both are done. Development builds and the editor have no splash. A release
+    // without it does not run.
+    if (globalThis.__PISTON_PROJECT__?.release && !globalThis.__PISTON_SPLASH__) throw new Error('This build is missing the Made with Piston splash.');
     await loop.start();
+    if (globalThis.__PISTON_SPLASH__) await globalThis.__PISTON_SPLASH__;
     loop.play();
     return loop;
 }

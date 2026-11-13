@@ -4,12 +4,15 @@
 ```js
 import input from '@piston/static/Input.js';
 
-input.getKeyDown('Space');            // pressed this frame
+input.getKeyDown('Space');            // held (also true for a quick tap)
+input.wasPressed('Space');            // went down this step - exactly once, never misses a tap
 input.isMouseButtonPressed(0);        // left button held
 input.getCanvasMousePosition();       // mouse in canvas pixels
 Piston.gameLoop.getMouseWorldPosition();  // mouse in WORLD units (accounts for the camera)
 ```
 Use world position for anything that aims at the scene. Canvas position is for screen-space UI.
+
+More on edges in [Simulation, input and the entity pipeline](doc:17-simulation-and-pipeline).
 
 The Game view scales the canvas to fit its window; input already accounts for that.
 

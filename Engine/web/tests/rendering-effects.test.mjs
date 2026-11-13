@@ -85,7 +85,7 @@ test('without an image the shape path is used, in the chosen blend mode', () => 
 });
 test('GameLoop scales simulated time by timeScale and resets it when a scene loads', () => {
     const src = readFileSync(new URL('../GameLoop.js', import.meta.url), 'utf8');
-    assert.match(src, /Constants\.DELTA_TIME = isPlaying \? Math\.min\(rawDeltaTime, Constants\.MAX_DELTA_TIME\) \* Math\.max\(0, this\.timeScale\) : 0/);
+    assert.match(src, /Constants\.DELTA_TIME = this\.fixedDelta \* Math\.max\(0, this\.timeScale\)/);
     assert.match(src, /this\.timeScale = 1;[^\n]*\n\s*setLastSceneId/);
     assert.match(src, /import \{ PostProcess \}/); assert.match(src, /import \{ Light2D \}/);
 });

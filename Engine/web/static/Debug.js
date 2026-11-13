@@ -1,7 +1,8 @@
 // Shared debug-visualization toggles, readable/writable from the Inspector popup.
 class DebugManager {
     constructor() {
-        this.showColliders = true;
+        // Off by default so exported games never draw collider outlines. The editor turns it on where it wants it (the Game view, the legacy dev toolbar).
+        this.showColliders = false;
         this._logListeners = [];
     }
 

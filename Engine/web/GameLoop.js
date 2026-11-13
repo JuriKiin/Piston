@@ -5,6 +5,7 @@ import { InputController } from "./Input/InputController.js";
 import { SpatialGrid } from "./Physics/Colliders/SpacialGrid.js";
 import Constants from "./static/Constants.js";
 import { PhysicsEngine } from "./Physics/PhysicsEngine.js";
+import { FixedStep } from "./FixedStep.js";
 import { PlayState } from "./PlayState.js";
 import { DevToolbar } from "./Debug/DevToolbar.js";
 import { Vector2 } from "./Physics/Vector2.js";
@@ -32,6 +33,9 @@ import { audio } from "./Audio/AudioService.js";
 import { SceneRegistry } from "./SceneRegistry.js";
 import "./PhysicsMaterialComponent.js";
 import "./TrailRenderer.js";
+import "./BeamRenderer.js";
+import "./DistanceJoint.js";
+import "./RopeChain.js";
 import { PostProcess } from "./PostProcess.js";
 import { Light2D } from "./Light2D.js";
 import "./LevelFlow.js";
@@ -57,6 +61,7 @@ export default class GameLoop {
      * @param {object} [options]
      * @param {boolean} [options.devTools=true] Set false to omit the Play/Pause/Stop toolbar
      *   and the `window.Piston` bridge the Inspector popup relies on (e.g. for a shipped build).
+     * @param {number} [options.fixedHz=60] Simulation steps per second (see `fixedHz`).
      */
     constructor(canvas, scene, options = {}) {
         this.canvas = canvas;
@@ -71,9 +76,17 @@ export default class GameLoop {
         this.lastTime = null;
         this.physicsEngine = new PhysicsEngine(this.spatialGrid);
 
-        // Multiplies the simulated time of every frame (DELTA_TIME): 1 = normal, 0 = frozen (hit-stop), 0.3 = slow motion. Animators, particles and trails follow it;
-        // rigidbody velocities are per-frame, so physics bodies are not scaled by it. Reset to 1 whenever a scene loads.
+        // Multiplies the simulated time of every step (DELTA_TIME): 1 = normal, 0 = frozen (hit-stop), 0.3 = slow motion. Animators, particles and trails follow it;
+        // rigidbody velocities are per-step (a "pixels per frame" value means pixels per fixed step), so physics bodies are not scaled by it. Reset to 1 whenever a scene loads.
         this.timeScale = 1;
+
+        // The simulation runs in fixed steps (default 60 per second) driven by an accumulator, so game speed does not depend on the display refresh rate.
+        // Rendering still happens once per display frame. `simSteps` counts the steps run while Playing (the editor's Step button advances it by exactly one).
+        this.stepper = new FixedStep({ hz: options.fixedHz ?? 60 });
+        this.simSteps = 0;
+        this.stepCostMs = 0; // smoothed wall-clock cost of one simulation step; limits catch-up (see update())
+        // Bumped whenever the entity list is rebuilt wholesale (scene load, Stop's restore): anything holding entities across that (EntityPool) must forget them.
+        this.generation = 0;
 
         this.playState = PlayState.Edit;
         this._editSnapshot = null;
@@ -107,7 +120,7 @@ export default class GameLoop {
      */
     get camera() {
         for (const entity of this.entities) {
-            if (entity.destroyed) continue;
+            if (entity.destroyed || entity.active === false) continue;
             const camera = entity.getComponent(Camera);
             if (camera) return camera;
         }
@@ -123,7 +136,7 @@ export default class GameLoop {
      */
     get input() {
         for (const entity of this.entities) {
-            if (entity.destroyed) continue;
+            if (entity.destroyed || entity.active === false) continue;
             const controller = entity.getComponent(InputController);
             if (controller) return controller;
         }
@@ -153,7 +166,7 @@ export default class GameLoop {
     async start() {
         await this.#loadLevel();
 
-        this.lastTime = Date.now();
+        this.lastTime = performance.now();
 
         const loop = () => {
             this.update();
@@ -185,7 +198,9 @@ export default class GameLoop {
         this.scene = scene;
         this.timeScale = 1; // a new scene never starts frozen or in slow motion
         setLastSceneId(scene.id); // so a page refresh resumes here instead of main.js's hardcoded default
+        this.stepper.reset();
         this.entities = [];
+        this.generation++;
         this.playState = PlayState.Edit;
         this._editSnapshot = null;
         this.deletedSceneKeys = new Set();
@@ -215,7 +230,7 @@ export default class GameLoop {
         // Release builds compile scene data into the bundle (globalThis.__PISTON_DATA__); there is no file to fetch.
         const inlined = globalThis.__PISTON_DATA__?.scenes?.[this.scene?.id];
         if (inlined) {
-            this.entities = buildEntitiesFromLevelData(this, inlined);
+            this.replaceEntitiesFromData(inlined);
             this.deletedSceneKeys = new Set(inlined.deletedKeys ?? []);
             this.loadedFromFile = true;
             this.#ensureCamera();
@@ -225,7 +240,7 @@ export default class GameLoop {
             const res = await fetch(levelPath(this.scene));
             if (res.ok) {
                 const data = await res.json();
-                this.entities = buildEntitiesFromLevelData(this, data);
+                this.replaceEntitiesFromData(data);
                 this.deletedSceneKeys = new Set(data.deletedKeys ?? []);
                 this.loadedFromFile = true;
                 this.#ensureCamera();
@@ -239,8 +254,29 @@ export default class GameLoop {
         this.#ensureCamera();
     }
 
+    /**
+     * Replaces the entity list with the entities saved in `data` (a level file's contents) and returns it. While the scene is being built the
+     * live list is an empty sink, so an entity that spawns more entities from its own start() (`loop.entities.push(...)`, `loop.add(...)`) is
+     * kept: those land after the saved entities. Before this, such entities were pushed onto the list that was about to be replaced and silently lost.
+     */
+    replaceEntitiesFromData(data) {
+        const spawned = [];
+        this.entities = spawned;
+        let built;
+        try {
+            built = buildEntitiesFromLevelData(this, data);
+        } catch (e) {
+            this.entities = spawned; // keep whatever was spawned; the caller sees the error
+            throw e;
+        }
+        this.entities = built.concat(spawned.filter(e => !built.includes(e)));
+        this.generation++;
+        return this.entities;
+    }
+
     #instantiateScene() {
         this.entities = this.scene.instantiate(this.canvas);
+        this.generation++;
         // Assigned once, right here, rather than recomputed from array position later - that stays
         // correct even after entities are deleted or reordered, since it's fixed at creation time.
         const tagCounts = new Map();
@@ -402,7 +438,7 @@ export default class GameLoop {
     async loadSceneFromFile(file) {
         const text = await file.text();
         const data = JSON.parse(text);
-        this.entities = buildEntitiesFromLevelData(this, data);
+        this.replaceEntitiesFromData(data);
         this.deletedSceneKeys = new Set(data.deletedKeys ?? []);
         this.#discardDraft();
     }
@@ -564,62 +600,117 @@ export default class GameLoop {
             return entity;
         });
         this.deletedSceneKeys = new Set(snapshot.deletedSceneKeys);
+        this.generation++;
     }
 
-    update() {
-        // --- Time Management ---
-        if (!this.lastTime) this.lastTime = Date.now();
-        const rawDeltaTime = (Date.now() - this.lastTime) / 1000;
-        this.lastTime = Date.now();
+    /** Simulation steps per second. Setting it changes the step length (`fixedDelta`); every `Constants.DELTA_TIME` the game reads is one step. Default 60. */
+    get fixedHz() { return this.stepper.hz; }
+    set fixedHz(hz) { this.stepper.setRate(hz); }
 
-        const isPlaying = this.playState === PlayState.Playing;
-        // Clamp so a stall (tab switch, GC pause, breakpoint) can't produce one huge delta -
-        // uncapped, a single frame's movement could tunnel a fast entity clean through a wall.
-        // 0 while not playing so anything reading DELTA_TIME during Edit/Paused sees no elapsed time.
-        Constants.DELTA_TIME = isPlaying ? Math.min(rawDeltaTime, Constants.MAX_DELTA_TIME) * Math.max(0, this.timeScale) : 0;
+    /** Length of one simulation step in seconds (1 / fixedHz), before `timeScale`. */
+    get fixedDelta() { return this.stepper.step; }
 
-        // --- Entity Lifecycle ---
-        // Sweep entities destroyed during the previous frame. Deferred to frame start (rather
-        // than removed immediately on destroy()) so destroy() is safe to call while entities are
-        // mid-iteration, e.g. from inside a collision callback.
+    /** Removes entities destroyed since the last sweep and refreshes the active-collider list. Deferred (rather than done in destroy()) so destroy() is safe mid-iteration, e.g. from a collision callback. */
+    #sweep(recordDeletions) {
         if (this.entities.some(e => e.destroyed)) {
-            // A deletion made in Edit (Inspector's Delete Entity, the Delete key) is meant to
-            // stick; one that happens during Play (a ball sinking, a lifetime running out) is
-            // transient simulation state that Stop() already reverts, so it's deliberately not
-            // recorded here.
-            if (!isPlaying) {
+            // A deletion made in Edit (Inspector's Delete Entity, the Delete key) is meant to stick; one that happens during Play (a ball sinking,
+            // a lifetime running out) is transient simulation state that Stop() already reverts, so it's deliberately not recorded.
+            if (recordDeletions) {
                 for (const e of this.entities) {
                     if (e.destroyed && e._sceneKey) this.deletedSceneKeys.add(e._sceneKey);
                 }
             }
             this.entities = this.entities.filter(e => !e.destroyed);
         }
+        this.activeColliders = this.entities.filter(e => e.active !== false && e.rigidbody && e.rigidbody.collider && e.rigidbody.collider.enabled);
+        this.joints = [];
+        for (const e of this.entities) {
+            if (!e._hasJoints || e.active === false) continue;
+            for (const c of e.components) if (c.enabled && typeof c.solve === 'function') this.joints.push(c);
+        }
+    }
 
+    /** One fixed simulation step: update every entity, resolve collisions, settle rest state. `DELTA_TIME` is the step length times `timeScale`. */
+    #simulate() {
+        Constants.DELTA_TIME = this.fixedDelta * Math.max(0, this.timeScale);
+        this.#sweep(false);
+
+        if (this.activeColliders.length > 0) {
+            this.spatialGrid.update(this.activeColliders);
+        }
+
+        for (const entity of this.entities) {
+            if (entity instanceof Entity && entity.active !== false) {
+                entity.update();
+            }
+        }
+
+        // Joints and chains: after everyone has moved, before collisions, in entity order (so the result is deterministic).
+        for (const joint of this.joints) joint.solve();
+
+        this.physicsEngine.handleCollisions(this.activeColliders);
+
+        for (const entity of this.entities) {
+            if (entity.active !== false) entity.rigidbody?.updateRestState();
+        }
+
+        this.simSteps++;
+        input.endStep();
+    }
+
+    /** #simulate() timed, feeding `stepCostMs` (a smoothed average). */
+    #timedSimulate() {
+        const t0 = performance.now();
+        this.#simulate();
+        const cost = performance.now() - t0;
+        this.stepCostMs = this.stepCostMs === 0 ? cost : this.stepCostMs * 0.8 + cost * 0.2;
+    }
+
+    /**
+     * Advances the simulation by exactly one fixed step and redraws, regardless of the play state: what the editor's Step button uses, so it
+     * moves the world by one step (1/60 s by default) instead of by however long the last display frame happened to take.
+     */
+    stepOnce() {
+        this.stepper.reset();
+        this.lastTime = performance.now();
+        this.#simulate();
+        this.#render();
+    }
+
+    /** One display frame: runs however many fixed steps the elapsed real time owes (while Playing), then renders once. */
+    update(nowMs = performance.now()) {
+        // --- Time Management ---
+        if (!this.lastTime) this.lastTime = nowMs;
+        const rawDeltaTime = (nowMs - this.lastTime) / 1000;
+        this.lastTime = nowMs;
+
+        const isPlaying = this.playState === PlayState.Playing;
+        // DELTA_TIME is 0 while not playing so anything reading it during Edit/Paused sees no elapsed time.
+        Constants.DELTA_TIME = isPlaying ? this.fixedDelta * Math.max(0, this.timeScale) : 0;
+
+        if (isPlaying) {
+            // Catching up after a hitch is only worth it while steps are cheap: allow as many extra steps as fit in one step's length of wall-clock time.
+            // When a single step costs as much as the step itself (a very heavy scene), the game slows down instead of spiralling into longer and longer frames.
+            this.stepper.maxSteps = Math.max(1, Math.min(5, Math.floor(this.fixedDelta * 1000 / Math.max(0.01, this.stepCostMs))));
+            const steps = this.stepper.advance(rawDeltaTime);
+            if (steps === 0) this.#sweep(false);
+            for (let i = 0; i < steps; i++) this.#timedSimulate();
+            Constants.DELTA_TIME = this.fixedDelta * Math.max(0, this.timeScale);
+        } else {
+            // Frozen in Edit/Paused so a scene can be positioned before Play. Presses made while frozen must not fire on the first step after resuming.
+            this.stepper.reset();
+            this.#sweep(true);
+            input.endStep();
+        }
+
+        this.#render();
+    }
+
+    #render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         if (this.scene?.backgroundColor) {
             this.ctx.fillStyle = this.scene.backgroundColor;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-
-        this.activeColliders = this.entities.filter(e => e.rigidbody && e.rigidbody.collider && e.rigidbody.collider.enabled);
-
-        // --- Simulation Step --- (frozen in Edit/Paused so a scene can be positioned before Play)
-        if (isPlaying) {
-            if (this.activeColliders.length > 0) {
-                this.spatialGrid.update(this.activeColliders);
-            }
-
-            for (const entity of this.entities) {
-                if (entity instanceof Entity) {
-                    entity.update();
-                }
-            }
-
-            this.physicsEngine.handleCollisions(this.activeColliders);
-
-            for (const entity of this.entities) {
-                entity.rigidbody?.updateRestState();
-            }
         }
 
         // --- Rendering --- (always runs, so Edit/Paused still show the current scene state)
@@ -632,8 +723,8 @@ export default class GameLoop {
         // component actually controls what's drawn in front of what - Array.sort is stable, so
         // entities that tie keep their existing relative order instead of jittering between frames.
         const byOrder = (a, b) => a.getSortingOrder() - b.getSortingOrder();
-        const worldEntities = this.entities.filter(e => e instanceof Entity && (e.space ?? 'World') === 'World').sort(byOrder);
-        const screenEntities = this.entities.filter(e => e instanceof Entity && e.space === 'Screen').sort(byOrder);
+        const worldEntities = this.entities.filter(e => e instanceof Entity && e.active !== false && (e.space ?? 'World') === 'World').sort(byOrder);
+        const screenEntities = this.entities.filter(e => e instanceof Entity && e.active !== false && e.space === 'Screen').sort(byOrder);
 
         const post = this.#activePostProcess();
         if (post) {

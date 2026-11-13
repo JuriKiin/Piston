@@ -2,6 +2,7 @@ import { Vector2 } from "@piston/Physics/Vector2.js";
 import { ParticleEmitter } from "@piston/ParticleEmitter.js";
 import { Animator } from "@piston/Animator.js";
 import { Light2D } from "@piston/Light2D.js";
+import { EntityPool } from "@piston/EntityPool.js";
 import Constants from "@piston/static/Constants.js";
 import { Actor, Game, mkSprite, ART, rand } from "./Game.js";
 
@@ -31,21 +32,24 @@ export class FxSprite extends Actor {
     }
 }
 
-/** Fires particle bursts the moment it appears, then removes itself. `emitters` is a list of ParticleEmitter option bags. */
+/** Fires particle bursts the moment it appears, then switches off. `emitters` is a list of ParticleEmitter option bags; pooled per distinct list (see Fx.burst). */
 export class FxBurst extends Actor {
-    constructor(x, y, emitters, rot = 0) { super(); this.px = x; this.py = y; this.emitters = emitters; this.rot = rot; this.tag = 'Fx'; this.order = 70; this.fired = false; }
+    constructor(emitters) { super(); this.emitters = emitters; this.tag = 'Fx'; this.order = 70; this.fired = false; this.span = 0; }
     start() {
-        this.transform.position = new Vector2(this.px, this.py);
-        this.transform.rotation = this.rot;
-        let life = 0;
-        this.ems = this.emitters.map((e) => { const p = this.addComponent(new ParticleEmitter({ maxParticles: 80, ...e })); life = Math.max(life, (e.lifetime ?? 0.6) * 1.3); return p; });
-        this.lifetime = life + 0.05;
+        this.ems = this.emitters.map((e) => { const p = this.addComponent(new ParticleEmitter({ maxParticles: 80, ...e })); this.span = Math.max(this.span, (e.lifetime ?? 0.6) * 1.3); return p; });
+    }
+    /** Places the burst and re-arms it: called every time the pool hands it out. `angles` overrides each emitter's direction (kept out of the pool key). */
+    play(x, y, rot, angles) {
+        this.transform.position.x = x; this.transform.position.y = y; this.transform.rotation = rot;
+        this.ems.forEach((p, i) => { p.particles = []; p.owed = 0; p.angle = angles[i] ?? -90; });
+        this.lifetime = this.span + 0.05; this.fired = false;
     }
     update() {
         super.update();
         if (!this.fired) { this.fired = true; for (const p of this.ems) p.burst(); }
     }
 }
+const burstPools = new Map();
 
 const sheet = (name, frames, fw, fh, cols) => ({ sheet: name, frames, fw, fh, cols: cols ?? frames });
 const S = {
@@ -62,7 +66,13 @@ const debris = (n) => ({ imagePath: ART + 'shard.png', blendMode: 'normal', burs
 
 export const Fx = {
     sprite(o) { return Game.spawn(new FxSprite(o)); },
-    burst(x, y, emitters, rot) { return Game.spawn(new FxBurst(x, y, emitters, rot)); },
+    /** One pool per distinct emitter list, so every burst after the first reuses an entity and its emitters. The per-call direction (`angle`) is applied on acquire. */
+    burst(x, y, emitters, rot = 0) {
+        const angles = emitters.map(e => e.angle), plain = emitters.map(({ angle, ...rest }) => rest), key = JSON.stringify(plain);
+        let pool = burstPools.get(key);
+        if (!pool) burstPools.set(key, pool = new EntityPool({ create: () => new FxBurst(plain), onAcquire: (b, ...a) => b.play(...a) }));
+        return pool.acquire(x, y, rot, angles);
+    },
 
     /** A shockwave ring that expands and fades (driven by an Animator clip, so it is editable data). */
     ring(x, y, { color = 'amb', from = 30, to = 420, time = 0.55, light = true } = {}) {

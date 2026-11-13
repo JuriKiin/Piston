@@ -17,6 +17,7 @@ export class PhysicsEngine {
         const pairsToResolve = [];
 
         for (const entityA of activeColliders) {
+            if (entityA.active === false) continue; // switched off mid-step (e.g. an entity returned to its pool by an earlier collision callback)
             const nearbyEntities = this.spatialGrid.getNearby(entityA);
             const previousCollisions = entityA.rigidbody.collider.activeCollisions;
             const currentCollisions = new Set();
@@ -24,7 +25,7 @@ export class PhysicsEngine {
             const colliderA = entityA.rigidbody.collider;
 
             for (const entityB of nearbyEntities) {
-                if (entityA === entityB) continue;
+                if (entityA === entityB || entityB.active === false) continue;
 
                 const colliderB = entityB.rigidbody.collider;
                 if (!CollisionMatrix.shouldCollide(colliderA.layer, colliderB.layer)) continue;
