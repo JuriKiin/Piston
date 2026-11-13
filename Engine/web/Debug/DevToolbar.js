@@ -22,6 +22,7 @@ export class DevToolbar {
         window.Piston = window.Piston ?? {};
         window.Piston.gameLoop = gameLoop;
         window.Piston.Debug = Debug;
+        Debug.showColliders = true; // the dev toolbar is editor tooling: keep collider outlines on there (the engine default is off)
 
         this.root = document.createElement('div');
         this.root.style.cssText = `

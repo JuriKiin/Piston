@@ -43,6 +43,13 @@ export class InputController extends Component {
         return input.getKeyUp(token);
     }
 
+    /** True for exactly one simulation step after the key/button bound to `action` went down; a quick tap between two steps still counts. */
+    wasActionPressed(action) {
+        const token = this.bindings[action];
+        if (!token) return false;
+        return token.startsWith('Mouse') ? input.wasMousePressed(Number(token.slice(5))) : input.wasPressed(token);
+    }
+
     static #isTokenDown(token) {
         if (token.startsWith('Mouse')) return input.isMouseButtonPressed(Number(token.slice(5)));
         return input.getKeyDown(token);

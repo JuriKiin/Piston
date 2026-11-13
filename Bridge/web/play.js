@@ -11,7 +11,6 @@ setupConsoleCapture('game');
 let engine = null;
 let loop = null;
 let canvas = null;
-let frames = 0; // simulation frames run while Playing (also what Step advances)
 let mouseDowns = 0; // raw DOM mousedowns that reached this page (input diagnostics)
 
 // The game runs at a fixed design resolution (project.piston.json "resolution", passed as ?w=&h=) so it plays the
@@ -32,6 +31,7 @@ function fitCanvas() {
 
 async function boot() {
     engine = await loadEngine(params);
+    engine.Debug.showColliders = true; // the editor's Game view shows collider outlines; the engine default is off so exported games don't
     if (entryModule) await import(entryModule);
 
     canvas = document.getElementById('c');
@@ -39,11 +39,6 @@ async function boot() {
     loop = new engine.GameLoop(canvas, new engine.Scene({ id: '__play__', name: 'Game', backgroundColor: '#f0f0f0' }), { devTools: false });
     window.Piston = { gameLoop: loop, scenes: loop.scenes, audio: loop.audio }; // game code expects this (ENGINE_GUIDE §4)
     await loop.start();
-
-    // Count simulation frames. GameLoop's own rAF loop calls this.update() every frame, so wrapping
-    // the instance method sees all of them (and Step's manual call below).
-    const original = loop.update.bind(loop);
-    loop.update = () => { if (loop.playState === 'playing') frames++; original(); };
 
     window.addEventListener('resize', fitCanvas);
     window.addEventListener('mousedown', () => { mouseDowns++; }, true);
@@ -62,12 +57,11 @@ setupReceiver({
         // engine scene flow (Piston.scenes.next()) continues from the right place.
         const known = sceneId ? engine.SceneRegistry.get(sceneId) : null;
         if (known) loop.scene = known;
-        const entities = engine.SceneIO.buildEntitiesFromLevelData(loop, data);
+        const entities = loop.replaceEntitiesFromData(data); // keeps entities spawned from start()
         entities.forEach((e, i) => { if (!e._sceneKey) e._sceneKey = `${e.tag}#${i}`; });
-        loop.entities = entities;
         // Same default the engine uses for any scene with no camera: world (0,0) at the canvas's top-left.
         if (!entities.some(e => e.getComponent(engine.Camera))) loop.addEntityFromRegistry(engine.MainCamera).__auto = true;
-        frames = 0;
+        loop.simSteps = 0;
         return { entityCount: entities.length };
     },
 
@@ -90,20 +84,17 @@ setupReceiver({
 
     pause() { loop.pause(); return loop.playState; },
 
-    // One simulation frame while paused (or from a fresh start): the physics/debug workhorse.
+    // Exactly one fixed simulation step (1/60 s by default) while paused (or from a fresh start): the physics/debug workhorse.
     step() {
         if (loop.playState === 'edit') { loop.play(); loop.pause(); }
-        const previous = loop.playState;
-        loop.playState = 'playing';
-        loop.update();
-        loop.playState = previous;
-        return frames;
+        loop.stepOnce();
+        return loop.simSteps;
     },
 
     getPlayInfo() {
         return {
             playState: loop.playState,
-            frames,
+            frames: loop.simSteps,
             entityCount: live().filter(e => !e.__auto).length,
             scene: loop.scene?.id ?? null,
             mouseDowns,
