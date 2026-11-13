@@ -10,7 +10,7 @@ import { DustEmitter } from "./Director.js";
 import { Fx } from "./Fx.js";
 import { sfx, music } from "./Sfx.js";
 
-/** The title screen: a pulsing logo over the lit arena, drifting dust and shockwave pulses. Enter, Space or a click starts the fight. */
+/** The title screen: a pulsing logo over the lit arena, drifting dust and shockwave pulses, control glyphs in a corner. Enter, Space or a click starts the fight. */
 export class TitleDirector extends Actor {
     static description = 'The title screen controller.';
     constructor() { super(); this.tag = 'TitleDirector'; this.order = -100; this.t = 0; this.pulse = 1.2; this.go = false; }
@@ -25,7 +25,9 @@ export class TitleDirector extends Actor {
             { path: 'transform.size.y', keys: [{ t: 0, v: 250, ease: 'easeInOut' }, { t: 1.5, v: 257, ease: 'easeInOut' }, { t: 3, v: 250 }] }], events: [] }] }));
         this.prompt = mk(CX, 662, 10, 10, new Text({ text: 'PRESS ENTER OR CLICK TO START', fontFamily: 'sans-serif', fontSize: 36, color: '#d8fbff', align: 'center', sortingOrder: 90 }), new Animator({ playOnStart: true, defaultClip: 'blink', clips: [{ name: 'blink', duration: 1.6, loop: true, tracks: [
             { path: 'Text.color', keys: [{ t: 0, v: 'rgba(216,251,255,0.35)', ease: 'easeInOut' }, { t: 0.8, v: 'rgba(216,251,255,1)', ease: 'easeInOut' }, { t: 1.6, v: 'rgba(216,251,255,0.35)' }] }], events: [] }] }));
-        mk(CX, 900, 10, 10, new Text({ text: 'WASD move    mouse aim and hold to fire    SPACE dash', fontFamily: 'sans-serif', fontSize: 24, color: '#8fa3d8', align: 'center', sortingOrder: 90 }));
+        // Controls as small glyphs in the lower-left corner (keys to move, mouse to aim and fire, a wide key to dash): no sentences on the title screen.
+        const icon = (file, x, w, h) => { const s = mkSprite(file, { order: 90 }); s.opacity = 0.85; return mk(x, 988, w, h, s); };
+        icon('icon_move.png', 118, 112, 76); icon('icon_aim.png', 218, 56, 76); icon('icon_dash.png', 322, 120, 48);
         mk(CX, 1030, 10, 10, new Text({ text: 'a Piston engine showcase', fontFamily: 'sans-serif', fontSize: 20, color: '#4a5a8c', align: 'center', sortingOrder: 90 }));
     }
     update() {

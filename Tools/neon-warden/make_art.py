@@ -541,6 +541,49 @@ def make_logo():
         cv.paint(cv.line_mask([(W / 2 - 520, y), (W / 2 + 520, y)], 2.4, False), col, 0.9)
     cv.save('logo.png')
 
+
+# =========================================================================================== title-screen control icons (no text): keycaps, mouse, spacebar
+def keycap(cv, box, glyph, col=CYAN, hot=CYAN_W):
+    """A dark keycap with a lit rim; `glyph(cv, cx, cy)` draws what is on it."""
+    x0, y0, x1, y1 = box
+    m = cv.rrect_mask(box, 10)
+    cv.shadow(m, (0, 4), 6, 0.55)
+    cv.gradient_fill(m, hexc('#2a3566'), hexc('#10172f'), 90); cv.bevel(m, WHITE, 1.2, 0.35); cv.outline(m, hexc('#4a5a8c'), 1.6)
+    cv.glow(cv.rrect_mask((x0 + 3, y0 + 3, x1 - 3, y1 - 3), 8), col, 5, 0.25)
+    glyph(cv, (x0 + x1) / 2, (y0 + y1) / 2 - 1)
+
+def arrow_glyph(angle, size=13):
+    def g(cv, cx, cy):
+        pts = [(size, 0), (-size * 0.7, size * 0.8), (-size * 0.7, -size * 0.8)]
+        a = math.radians(angle)
+        pts = [(cx + px * math.cos(a) - py * math.sin(a), cy + px * math.sin(a) + py * math.cos(a)) for px, py in pts]
+        cv.emissive(cv.poly_mask(pts), CYAN, 5, 0.8, CYAN_W)
+    return g
+
+def make_icon_move():      # four arrow keys in an inverted T (WASD / arrows)
+    cv = Cv(224, 152); k = 64; g = 8; ox = (224 - 3 * k - 2 * g) / 2
+    keycap(cv, (ox + k + g, 14, ox + 2 * k + g, 14 + k), arrow_glyph(-90))
+    for i, a in enumerate((180, 90, 0)):
+        keycap(cv, (ox + i * (k + g), 14 + k + g, ox + i * (k + g) + k, 14 + 2 * k + g), arrow_glyph(a))
+    cv.save('icon_move.png')
+
+def make_icon_aim():       # a mouse with the left button lit
+    cv = Cv(112, 152); body = cv.rrect_mask((14, 8, 98, 144), 40)
+    cv.shadow(body, (0, 4), 6, 0.55); cv.gradient_fill(body, hexc('#2a3566'), hexc('#10172f'), 90); cv.bevel(body, WHITE, 1.2, 0.35); cv.outline(body, hexc('#4a5a8c'), 1.6)
+    left = cv.rrect_mask((18, 12, 54, 70), 22); right = cv.rrect_mask((58, 12, 94, 70), 22)
+    cv.emissive(left, CYAN, 7, 0.7, CYAN_W); cv.outline(right, hexc('#4a5a8c'), 1.4)
+    cv.paint(cv.line_mask([(56, 14), (56, 70)], 2.4, False), hexc('#0a0e22'), 0.9)
+    cv.emissive(cv.rrect_mask((52, 30, 60, 50), 4), AMB, 4, 0.6, AMB_W)
+    cv.save('icon_aim.png')
+
+def make_icon_dash():      # a wide key with a double chevron
+    cv = Cv(240, 96); box = (14, 14, 226, 78)
+    def chevrons(cv, cx, cy):
+        for dx in (-14, 14):
+            cv.emissive(cv.line_mask([(cx + dx - 11, cy - 16), (cx + dx + 5, cy), (cx + dx - 11, cy + 16)], 7), AMB, 6, 0.8, AMB_W)
+    keycap(cv, box, chevrons, AMB, AMB_W)
+    cv.save('icon_dash.png')
+
 # =========================================================================================== arena floor (jpg) and background
 def make_floor():
     import math as m
