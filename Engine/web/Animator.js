@@ -78,6 +78,17 @@ export class Animator extends Component {
         return new Promise((resolve) => { this.#waiters.push({ name, resolve }); });
     }
 
+    /** Jumps to a moment in a clip and holds there without playing (e.g. start a slide-in card hidden: seek('slideIn', 0)). */
+    seek(name, t = 0) {
+        const clip = this.clips.find(c => c.name === name);
+        if (!clip) return false;
+        this.current = name;
+        this.time = t;
+        this.isPlaying = false;
+        this.#apply(clip, t);
+        return true;
+    }
+
     #waiters = [];
     #notify(name) {
         const done = this.#waiters.filter(w => w.name === name);

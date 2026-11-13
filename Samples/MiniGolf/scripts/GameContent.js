@@ -17,5 +17,7 @@ import './Rock.js';
 import './Decor.js';
 import './Blade.js';
 import './Tunnel.js';
+import './Scorecard.js';
+import './ButtonAction.js';
 // Registers every scene so game code can switch scenes by id (SceneRegistry.get).
 import '../scenes/index.js';

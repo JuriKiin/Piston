@@ -1,0 +1,17 @@
+{
+  "Sanchez": {
+    "license": "OFL",
+    "files": [
+      {
+        "file": "./assets/fonts/Sanchez/Sanchez-Regular.ttf",
+        "weight": 400,
+        "style": "normal"
+      },
+      {
+        "file": "./assets/fonts/Sanchez/Sanchez-Italic.ttf",
+        "weight": 400,
+        "style": "italic"
+      }
+    ]
+  }
+}

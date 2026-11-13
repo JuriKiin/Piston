@@ -7,6 +7,7 @@ import { ParticleEmitter } from "@piston/ParticleEmitter.js";
 import { PlayState } from "@piston/PlayState.js";
 import { EntityRegistry } from "@piston/EntityRegistry.js";
 import { LevelFlow } from "@piston/LevelFlow.js";
+import { SceneRegistry } from "@piston/SceneRegistry.js";
 import { sfx, wait } from "./Sfx.js";
 
 export class Hole extends Entity {
@@ -73,10 +74,19 @@ export class Hole extends Entity {
         sfx.play('win', { minGap: 0 });
         sfx.play('cheer', { volume: 0.5, minGap: 0 });
         for (const emitter of this.components.filter(c => c instanceof ParticleEmitter)) emitter.burst();
-        await wait(1300);
+        await wait(1000);
         if (this.destroyed || loop.scene?.id !== sceneId || loop.playState === PlayState.Edit) return; // Stop was pressed meanwhile
 
-        await LevelFlow.finish(loop, strokes);
+        // Record the result, slide the score card in, and move on once the player has looked at it.
+        const info = LevelFlow.infoOf(loop.entities);
+        LevelFlow.complete(sceneId, strokes, info);
+        const card = loop.entities.find(e => e.tag === 'Scorecard');
+        const hasNext = !!(info?.nextScene && SceneRegistry.get(info.nextScene));
+        if (card) await card.show({ highlight: sceneId, final: !hasNext });
+        if (this.destroyed || loop.scene?.id !== sceneId || loop.playState === PlayState.Edit) return;
+
+        const { done } = await LevelFlow.finish(loop, strokes);
+        if (done) await loop.scenes.load('menu'); // that was the last hole
     }
 }
 

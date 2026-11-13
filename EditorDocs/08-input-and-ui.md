@@ -22,4 +22,4 @@ The Game view scales the canvas to fit its window; input already accounts for th
 
 ## Fonts
 
-A Text component's **Font** is a font family name. If the family has been downloaded into the project (see the Google Fonts plugin in *Plugins*), it loads from `assets/fonts/` with no network. Otherwise the engine asks Google Fonts' servers for it by name, which needs a connection while the game runs. Generic names (`serif`, `sans-serif`, `monospace`…) always work.
+A Text component's **Font** is a font family name **or a font file**: type a name, use the folder button to pick a `.ttf`, `.otf`, `.woff` or `.woff2` from your project (it opens in `assets/fonts`, where the Google Fonts plugin saves downloads), or drop a font file from the Project panel onto the field. A file is drawn under its own name. If the family has been downloaded into the project (see the Google Fonts plugin in *Plugins*), it loads from `assets/fonts/` with no network. Otherwise the engine asks Google Fonts' servers for it by name, which needs a connection while the game runs. Generic names (`serif`, `sans-serif`, `monospace`…) always work.

@@ -79,7 +79,10 @@ setupReceiver({
         const hole = live().find(e => e.tag === 'Hole');
         if (!hole) throw new Error('no Hole in this scene');
         const ball = live().find(e => e.tag === 'Ball');
-        await hole.onSunk(ball);
+        const finished = hole.onSunk(ball);
+        // The hole slides a score card in and waits for the player: let the test play that part.
+        for (let i = 0; i < 100; i++) { const card = live().find(e => e.tag === 'Scorecard'); if (card?.open && card.canContinue) { card.continueNow(); break; } await new Promise(r => setTimeout(r, 100)); }
+        await finished;
         return { id: loop.scene?.id ?? null, entities: live().length, hasBall: live().some(e => e.tag === 'Ball') };
     },
 

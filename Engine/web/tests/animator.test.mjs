@@ -104,4 +104,8 @@ test('a real ShapeRenderer changes color and opacity while the animator runs', (
     assert.notEqual(r.color, '#ffffff'); assert.match(r.color, /^#ff[0-9a-f]{2}[0-9a-f]{2}$/); assert.ok(r.opacity < 0.6 && r.opacity > 0.4);
     const props = listProperties(e).map(p => p.path); assert.ok(props.includes('ShapeRenderer.color') && props.includes('ShapeRenderer.opacity'));
 });
+test('seek poses an entity at a moment in a clip without playing it', () => {
+    const e = makeEntity(); const a = make([slide], e); assert.equal(a.seek('slide', 0.5), true);
+    assert.equal(a.isPlaying, false); assert.ok(Math.abs(e.transform.position.x - 50) < 0.001); assert.equal(a.seek('nope'), false);
+});
 console.log(`\n${passed} passed`);

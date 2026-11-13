@@ -8,6 +8,7 @@ import json, math, os, random, sys
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'Samples', 'MiniGolf')
 SCENES = os.path.join(ROOT, 'scenes')
 RES_W, RES_H = 1920, 1080
+FONT = 'Chewy'   # the UI font (any Google Fonts family, or one downloaded into assets/fonts). Change it here and re-run, or set it per Text in the editor.
 
 # ------------------------------------------------------------------ geometry helpers
 def catmull(points, n=14):
@@ -163,22 +164,59 @@ def add_scenery(sc, seed, count=30):
         placed.append((x, y)); kind = rnd.choices(['tree', 'bush', 'flowers', 'pine'], [3, 3, 3, 2])[0]
         add_decor(sc, kind, x, y, rnd.choice([70, 80, 90]) if kind in ('tree', 'pine') else rnd.choice([54, 60, 66]))
 
+def ui_element(sc, key, name, x, y, w, h, text, color, size, order, extra=None, radius=16):
+    comps = [{'type': 'Text', 'fields': {'text': text, 'fontFamily': FONT, 'fontSize': size, 'color': '#ffffff', 'align': 'center', 'sortingOrder': order + 1}},
+             {'type': 'UIContainer', 'fields': {'color': color, 'imagePath': '', 'cornerRadius': radius, 'sortingOrder': order}}] + (extra or [])
+    sc.add(base(key, name, 'UIElement', x, y, w, h, name=name, comps=comps))
+
 def finish(sc):
     xs = [p[0] for g in sc.grounds for p in g]; ys = [p[1] for g in sc.grounds for p in g]
-    cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2 - 20
-    w, h = max(xs) - min(xs) + 220, max(ys) - min(ys) + 260
-    zoom = round(max(0.45, min(1.3, RES_W / w, (RES_H - 90) / h)), 3)
+    cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2 - 30
+    w, h = max(xs) - min(xs) + 240, max(ys) - min(ys) + 300
+    zoom = round(max(0.45, min(1.3, RES_W / w, (RES_H - 170) / h)), 3)
     sc.add(base('camera', 'MainCamera', 'MainCamera', cx, cy, 20, 20, name='Camera', comps=[{'type': 'Camera', 'fields': {'zoom': zoom}}]))
     nxt = f'hole{sc.n + 1}' if sc.n < 9 else ''
-    def ui(key, name, x, y, w_, text, color, order, extra=None):
-        comps = [{'type': 'Text', 'fields': {'text': text, 'fontFamily': 'Chewy', 'fontSize': 20, 'color': '#ffffff', 'align': 'center', 'sortingOrder': order + 1}},
-                 {'type': 'UIContainer', 'fields': {'color': color, 'imagePath': '', 'cornerRadius': 8, 'sortingOrder': order}}] + (extra or [])
-        sc.add(base(key, name, 'UIElement', x, y, w_, 40, name=name, comps=comps))
-    ui('shotcount', 'ShotCount', 74.5, 34, 120, 'Stroke 0', '#1f2a24', 1)
-    ui('par', 'Par', 206.5, 34, 120, f'Par {sc.par}', '#26332c', 0,
-       extra=[{'type': 'LevelInfo', 'fields': {'title': f'Hole {sc.n}: {sc.title}', 'par': sc.par, 'nextScene': nxt}}])
-    ui('title', 'Title', 960, 34, 520, f'Hole {sc.n} · {sc.title}', '#1f2a24', 1)
+    # Big, readable HUD (the game renders at 1920x1080): stroke count, par, and the hole number.
+    ui_element(sc, 'shotcount', 'ShotCount', 175, 62, 290, 80, 'Stroke 0', '#1f2a24', 44, 1)
+    ui_element(sc, 'par', 'Par', 440, 62, 200, 80, f'Par {sc.par}', '#26332c', 44, 0,
+               extra=[{'type': 'LevelInfo', 'fields': {'title': f'Hole {sc.n}', 'par': sc.par, 'nextScene': nxt}}])
+    ui_element(sc, 'title', 'Title', 960, 62, 300, 88, f'Hole {sc.n}', '#1f2a24', 54, 1, radius=18)
+    # The score card slides down from above the screen; it sits where it ends up so it can be edited, and starts hidden when the game plays.
+    shown, hidden = 540, -460
+    slide_in = clip('slideIn', 0.8, [track('transform.position.y', (0, hidden, 'backOut'), (0.8, shown, 'linear'))])
+    slide_out = clip('slideOut', 0.5, [track('transform.position.y', (0, shown, 'easeIn'), (0.5, hidden, 'linear'))])
+    sc.add(base('scorecard', 'Scorecard', 'Scorecard', 960, shown, 1560, 700, name='Score card', fields={'space': 'Screen'}, comps=[animator([slide_in, slide_out])]))
     return zoom
+
+def menu():
+    sc = Scene(0, 'Main Menu', 0, bg='#2f7d45'); sc.is_menu = True
+    poly, c = corridor([(380, 905), (1540, 905)], 170, n=1)                      # a little fairway strip for the ball and flag
+    cx, cy = centroid(poly); local = [(x - cx, y - cy) for x, y in poly]
+    sc.add(base('fairway', 'Polygon', 'Polygon', cx, cy, 20, 20, rb=dict(STATIC), col=collider(trigger=True), name='Fairway', comps=[polygon_renderer(local, '#69c26f', '#6b4a2b', 9, 0)]))
+    rnd = random.Random(5)
+    for _ in range(60):
+        x, y = rnd.uniform(40, 1880), rnd.uniform(380, 1040)
+        if dist_to_poly(poly, x, y) < 110 or inside(poly, x, y) or abs(x - 960) < 420 and y < 700: continue
+        add_decor(sc, rnd.choices(['tree', 'bush', 'flowers', 'pine'], [3, 3, 3, 2])[0], x, y, rnd.choice([84, 96, 110]))
+    add_decor(sc, 'ball', 560, 905, 56); add_decor(sc, 'hole', 1380, 912, 64)
+    sc.add(base('flag', 'Flag', 'Flag', 1384, 918, 48, 90, name='Flag'))
+    drop = clip('drop', 1.2, [track('transform.position.y', (0, -300, 'bounceOut'), (1.2, 280, 'linear'))])
+    sc.add(base('sign', 'Title', 'UIElement', 960, 280, 1080, 300, name='Title', comps=[
+        {'type': 'Text', 'fields': {'text': 'Mini Golf', 'fontFamily': FONT, 'fontSize': 190, 'color': '#fff6d5', 'align': 'center', 'sortingOrder': 2}},
+        {'type': 'UIContainer', 'fields': {'color': '#6b4a2b', 'imagePath': '', 'cornerRadius': 40, 'sortingOrder': 1}},
+        animator([drop], 'drop', True)]))
+    pulse = clip('pulse', 1.6, [track('transform.size.x', (0, 440, 'easeInOut'), (0.8, 470, 'easeInOut'), (1.6, 440, 'linear')), track('transform.size.y', (0, 140, 'easeInOut'), (0.8, 150, 'easeInOut'), (1.6, 140, 'linear'))], loop=True)
+    sc.add(base('play', 'PlayButton', 'UIElement', 960, 610, 440, 140, name='Play button', comps=[
+        {'type': 'Text', 'fields': {'text': 'Play', 'fontFamily': FONT, 'fontSize': 96, 'color': '#2b1b0a', 'align': 'center', 'sortingOrder': 4}},
+        {'type': 'UIContainer', 'fields': {'color': '#e9a23b', 'imagePath': '', 'cornerRadius': 36, 'sortingOrder': 3}},
+        {'type': 'Button', 'fields': {'sortingOrder': 3}},
+        {'type': 'ButtonAction', 'fields': {'action': 'newGame', 'target': 'hole1', 'hoverColor': '#f6bd5c'}},
+        animator([pulse], 'pulse', True)]))
+    sc.add(base('hint', 'Hint', 'UIElement', 960, 770, 900, 70, name='Hint', comps=[
+        {'type': 'Text', 'fields': {'text': 'Pull back from the ball and let go to putt', 'fontFamily': FONT, 'fontSize': 46, 'color': '#fff6d5', 'align': 'center', 'sortingOrder': 4}},
+        {'type': 'UIContainer', 'fields': {'color': 'rgba(31,42,36,0.55)', 'imagePath': '', 'cornerRadius': 24, 'sortingOrder': 3}}]))
+    sc.add(base('camera', 'MainCamera', 'MainCamera', 960, 540, 20, 20, name='Camera', comps=[{'type': 'Camera', 'fields': {'zoom': 1}}]))
+    return sc
 
 # ------------------------------------------------------------------ the nine holes
 def hole1():
@@ -255,10 +293,23 @@ def write():
         data = {'version': 3, 'sceneName': f'Mini Golf - Hole {sc.n}', 'backgroundColor': sc.bg, 'deletedKeys': [], 'entities': sc.entities}
         with open(os.path.join(SCENES, f'hole{sc.n}.json'), 'w') as f: json.dump(data, f, indent=2)
         built.append((sc, zoom)); print(f'hole{sc.n}: {sc.title}  par {sc.par}  entities {len(sc.entities)}  zoom {zoom}')
+    m = menu()
+    with open(os.path.join(SCENES, 'menu.json'), 'w') as f: json.dump({'version': 3, 'sceneName': 'Mini Golf - Menu', 'backgroundColor': m.bg, 'deletedKeys': [], 'entities': m.entities}, f, indent=2)
+    print(f'menu: entities {len(m.entities)}')
     lines = ["import { Scene } from '@piston/Scene.js';", "import { SceneRegistry } from '@piston/SceneRegistry.js';", '',
-             '// Generated by Tools/minigolf/make_course.py. Each scene is an id and a name; its layout lives in scenes/<id>.json.', '']
-    for sc, _ in built: lines.append(f"SceneRegistry.register(new Scene({{ id: 'hole{sc.n}', name: 'Mini Golf - Hole {sc.n}: {sc.title}', backgroundColor: '{sc.bg}' }}));")
+             '// Generated by Tools/minigolf/make_course.py. Each scene is an id and a name; its layout lives in scenes/<id>.json.', '',
+             "SceneRegistry.register(new Scene({ id: 'menu', name: 'Main Menu', backgroundColor: '#2f7d45' }));"]
+    for sc, _ in built: lines.append(f"SceneRegistry.register(new Scene({{ id: 'hole{sc.n}', name: 'Hole {sc.n}', backgroundColor: '{sc.bg}' }}));")
     with open(os.path.join(SCENES, 'index.js'), 'w') as f: f.write('\n'.join(lines) + '\n')
+    scripts = os.path.join(ROOT, 'scripts')
+    with open(os.path.join(scripts, 'Course.js'), 'w') as f:
+        f.write('// Generated by Tools/minigolf/make_course.py: the holes in play order, with their pars (the score card reads this).\nexport const COURSE = [\n'
+                + ''.join(f"    {{ id: 'hole{sc.n}', par: {sc.par} }},\n" for sc, _ in built) + '];\n')
+    with open(os.path.join(scripts, 'Theme.js'), 'w') as f:
+        f.write(f"// Generated by Tools/minigolf/make_course.py (FONT at the top of that file). The font the score card draws with.\nexport const FONT = '{FONT}';\n")
+    cfg_path = os.path.join(ROOT, 'project.piston.json'); cfg = json.load(open(cfg_path))
+    cfg['sampleRevision'] = 3; cfg['startScene'] = 'menu'; cfg['sceneOrder'] = ['menu'] + [f'hole{sc.n}' for sc, _ in built]
+    json.dump(cfg, open(cfg_path, 'w'), indent=2); open(cfg_path, 'a').write('\n')
     return built
 
 def preview(built):

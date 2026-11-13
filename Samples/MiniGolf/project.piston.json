@@ -5,10 +5,22 @@
   "engine": "0.1.0",
   "entry": "/scripts/GameContent.js",
   "scenesDir": "scenes",
-  "startScene": "hole1",
+  "startScene": "menu",
   "resolution": {
     "width": 1920,
     "height": 1080
   },
-  "sampleRevision": 2
+  "sampleRevision": 3,
+  "sceneOrder": [
+    "menu",
+    "hole1",
+    "hole2",
+    "hole3",
+    "hole4",
+    "hole5",
+    "hole6",
+    "hole7",
+    "hole8",
+    "hole9"
+  ]
 }

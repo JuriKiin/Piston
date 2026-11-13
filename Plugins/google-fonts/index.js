@@ -92,7 +92,7 @@ function describe(family, { meta }) {
       : 'Free to use in games. Keep the license file with the font (it is saved next to it). Not public domain.',
     `\nFiles: ${meta.fonts.length}${variable ? ` (variable font, weights ${meta.axes.wght ? meta.axes.wght.join('–') : 'adjustable'})` : ''}`,
     meta.fonts.map((f) => `  • ${f.filename}`).join('\n'),
-    `\nSaves to ${FONTS_DIR}/${family}/. Then set a Text component's Font to "${family}".`,
+    `\nSaves to ${FONTS_DIR}/${family}/. Then set a Text component's Font to "${family}", or use the folder button in that field to pick the file.`,
   ].join('\n');
 }
 
@@ -123,7 +123,7 @@ async function install(piston, family, found, report) {
   try { manifest = JSON.parse(piston.project.readText(`${FONTS_DIR}/fonts.json`) || '{}'); } catch { manifest = {}; }
   manifest[family] = manifestEntry(family, meta);
   piston.project.writeText(`${FONTS_DIR}/fonts.json`, JSON.stringify(manifest, null, 2));
-  return `Added ${family}: ${meta.fonts.length} file${meta.fonts.length === 1 ? '' : 's'} in ${base}. Use "${family}" as a Text component's font.`;
+  return `Added ${family}: ${meta.fonts.length} file${meta.fonts.length === 1 ? '' : 's'} in ${base}. Set a Text's Font to "${family}", or pick the file with the folder button.`;
 }
 
 export default {

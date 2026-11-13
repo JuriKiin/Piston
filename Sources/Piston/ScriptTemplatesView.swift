@@ -95,37 +95,33 @@ struct NewScriptSheet: View {
     }
 }
 
-/// "Hierarchy (n)  +" : the plus adds an instance of any registered entity type to the scene.
-struct HierarchyHeader: View {
+/// The "+" menu in the Hierarchy header: adds a prefab or an instance of any registered entity type to the scene.
+struct HierarchyAddMenu: View {
     @ObservedObject var model: EditorModel
 
     var body: some View {
-        HStack {
-            Text("Hierarchy (\(model.entities.count))")
-            Spacer()
-            Menu {
-                let prefabs = model.loadPrefabList()
-                if !prefabs.isEmpty {
-                    Section("Prefabs") {
-                        ForEach(prefabs) { p in Button(p.name) { Task { await model.addPrefab(p.id) } } }
-                    }
+        Menu {
+            let prefabs = model.loadPrefabList()
+            if !prefabs.isEmpty {
+                Section("Prefabs") {
+                    ForEach(prefabs) { p in Button(p.name) { Task { await model.addPrefab(p.id) } } }
                 }
-                let groups = Dictionary(grouping: model.entityTypes, by: \.group)
-                ForEach(groups.keys.sorted { ($0 == "engine" ? 1 : 0, $0) < ($1 == "engine" ? 1 : 0, $1) }, id: \.self) { group in
-                    Section(group == "engine" ? "Engine" : group) {
-                        ForEach((groups[group] ?? []).sorted { $0.name < $1.name }, id: \.self) { type in
-                            Button(type.name) { Task { await model.addEntity(type: type.name) } }
-                        }
-                    }
-                }
-            } label: {
-                Image(systemName: "plus")
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .disabled(model.entityTypes.isEmpty)
-            .help("Add an entity to the scene")
+            let groups = Dictionary(grouping: model.entityTypes, by: \.group)
+            ForEach(groups.keys.sorted { ($0 == "engine" ? 1 : 0, $0) < ($1 == "engine" ? 1 : 0, $1) }, id: \.self) { group in
+                Section(group == "engine" ? "Engine" : group) {
+                    ForEach((groups[group] ?? []).sorted { $0.name < $1.name }, id: \.self) { type in
+                        Button(type.name) { Task { await model.addEntity(type: type.name) } }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "plus")
         }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .disabled(model.entityTypes.isEmpty)
+        .help("Add an entity to the scene")
     }
 }

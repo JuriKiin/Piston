@@ -13,7 +13,7 @@ export class Text extends Component {
 
     static fields = [
         { key: 'text', label: 'Text', type: 'text' },
-        { key: 'fontFamily', label: 'Font (Google Fonts name)', type: 'text' },
+        { key: 'fontFamily', label: 'Font (name or font file)', type: 'text', accept: 'font' },
         { key: 'fontSize', label: 'Font Size', type: 'number', animatable: true },
         { key: 'color', label: 'Color', type: 'color', animatable: true },
         { key: 'align', label: 'Align (left/center/right)', type: 'text' },
@@ -46,7 +46,7 @@ export class Text extends Component {
         if (!this.text) return;
         // The trailing sans-serif is a real fallback, not decoration - it's what actually renders
         // for the handful of frames before a Google Font finishes loading (see GoogleFonts.js).
-        ctx.font = `${this.fontSize}px "${this.fontFamily}", sans-serif`;
+        ctx.font = `${this.fontSize}px "${GoogleFonts.familyFor(this.fontFamily)}", sans-serif`;
         ctx.fillStyle = this.color;
         ctx.textAlign = ['left', 'center', 'right'].includes(this.align) ? this.align : 'center';
         ctx.textBaseline = 'middle';

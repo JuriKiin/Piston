@@ -1,0 +1,945 @@
+{
+  "version": 3,
+  "sceneName": "Mini Golf - Menu",
+  "backgroundColor": "#2f7d45",
+  "deletedKeys": [],
+  "entities": [
+    {
+      "sceneKey": "fairway",
+      "tag": "Polygon",
+      "name": "Fairway",
+      "type": "Polygon",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 960.0,
+          "y": 905.0
+        },
+        "rotation": 0,
+        "size": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "fields": {},
+      "rigidbody": {
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "angularVelocity": 0,
+        "mass": 0,
+        "isStatic": true,
+        "useGravity": false
+      },
+      "collider": {
+        "enabled": true,
+        "isTrigger": true,
+        "isInverse": false
+      },
+      "components": [
+        {
+          "type": "PolygonRenderer",
+          "fields": {
+            "vertices": [
+              {
+                "x": -580.0,
+                "y": 85.0
+              },
+              {
+                "x": 580.0,
+                "y": 85.0
+              },
+              {
+                "x": 606.27,
+                "y": 80.84
+              },
+              {
+                "x": 629.96,
+                "y": 68.77
+              },
+              {
+                "x": 648.77,
+                "y": 49.96
+              },
+              {
+                "x": 660.84,
+                "y": 26.27
+              },
+              {
+                "x": 665.0,
+                "y": 0.0
+              },
+              {
+                "x": 660.84,
+                "y": -26.27
+              },
+              {
+                "x": 648.77,
+                "y": -49.96
+              },
+              {
+                "x": 629.96,
+                "y": -68.77
+              },
+              {
+                "x": 606.27,
+                "y": -80.84
+              },
+              {
+                "x": 580.0,
+                "y": -85.0
+              },
+              {
+                "x": -580.0,
+                "y": -85.0
+              },
+              {
+                "x": -606.27,
+                "y": -80.84
+              },
+              {
+                "x": -629.96,
+                "y": -68.77
+              },
+              {
+                "x": -648.77,
+                "y": -49.96
+              },
+              {
+                "x": -660.84,
+                "y": -26.27
+              },
+              {
+                "x": -665.0,
+                "y": 0.0
+              },
+              {
+                "x": -660.84,
+                "y": 26.27
+              },
+              {
+                "x": -648.77,
+                "y": 49.96
+              },
+              {
+                "x": -629.96,
+                "y": 68.77
+              },
+              {
+                "x": -606.27,
+                "y": 80.84
+              }
+            ],
+            "color": "#69c26f",
+            "strokeColor": "#6b4a2b",
+            "strokeWidth": 9,
+            "opacity": 1,
+            "sortingOrder": 0
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "decor-1",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 93.37,
+          "y": 687.31
+        },
+        "rotation": 0,
+        "size": {
+          "x": 110,
+          "y": 110
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-2",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 135.41,
+          "y": 483.52
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-3",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1636.12,
+          "y": 637.03
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-4",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 273.13,
+          "y": 381.17
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-5",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 345.18,
+          "y": 489.88
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-6",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1684.48,
+          "y": 577.2
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-7",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1761.86,
+          "y": 554.12
+        },
+        "rotation": 0,
+        "size": {
+          "x": 110,
+          "y": 110
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-8",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1786.57,
+          "y": 616.05
+        },
+        "rotation": 0,
+        "size": {
+          "x": 110,
+          "y": 110
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-9",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1489.44,
+          "y": 621.68
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-10",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 259.0,
+          "y": 542.42
+        },
+        "rotation": 0,
+        "size": {
+          "x": 96,
+          "y": 96
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-11",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 107.4,
+          "y": 1004.23
+        },
+        "rotation": 0,
+        "size": {
+          "x": 96,
+          "y": 96
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-12",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 312.68,
+          "y": 561.95
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-13",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 366.56,
+          "y": 431.61
+        },
+        "rotation": 0,
+        "size": {
+          "x": 110,
+          "y": 110
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-14",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 98.56,
+          "y": 868.77
+        },
+        "rotation": 0,
+        "size": {
+          "x": 96,
+          "y": 96
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-15",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 142.5,
+          "y": 984.61
+        },
+        "rotation": 0,
+        "size": {
+          "x": 96,
+          "y": 96
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-16",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1845.59,
+          "y": 752.27
+        },
+        "rotation": 0,
+        "size": {
+          "x": 96,
+          "y": 96
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-17",
+      "tag": "Decor",
+      "name": "Tree",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 236.2,
+          "y": 666.81
+        },
+        "rotation": 0,
+        "size": {
+          "x": 96,
+          "y": 96
+        }
+      },
+      "fields": {
+        "kind": "tree"
+      }
+    },
+    {
+      "sceneKey": "decor-18",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1878.71,
+          "y": 942.49
+        },
+        "rotation": 0,
+        "size": {
+          "x": 96,
+          "y": 96
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-19",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1806.64,
+          "y": 834.63
+        },
+        "rotation": 0,
+        "size": {
+          "x": 96,
+          "y": 96
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-20",
+      "tag": "Decor",
+      "name": "Pine",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 309.57,
+          "y": 628.82
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "pine"
+      }
+    },
+    {
+      "sceneKey": "decor-21",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1193.62,
+          "y": 709.55
+        },
+        "rotation": 0,
+        "size": {
+          "x": 84,
+          "y": 84
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-22",
+      "tag": "Decor",
+      "name": "Bush",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 156.12,
+          "y": 904.8
+        },
+        "rotation": 0,
+        "size": {
+          "x": 110,
+          "y": 110
+        }
+      },
+      "fields": {
+        "kind": "bush"
+      }
+    },
+    {
+      "sceneKey": "decor-23",
+      "tag": "Decor",
+      "name": "Flowers",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 556.77,
+          "y": 700.55
+        },
+        "rotation": 0,
+        "size": {
+          "x": 110,
+          "y": 110
+        }
+      },
+      "fields": {
+        "kind": "flowers"
+      }
+    },
+    {
+      "sceneKey": "decor-24",
+      "tag": "Decor",
+      "name": "Ball",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 560,
+          "y": 905
+        },
+        "rotation": 0,
+        "size": {
+          "x": 56,
+          "y": 56
+        }
+      },
+      "fields": {
+        "kind": "ball"
+      }
+    },
+    {
+      "sceneKey": "decor-25",
+      "tag": "Decor",
+      "name": "Hole",
+      "type": "Decor",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1380,
+          "y": 912
+        },
+        "rotation": 0,
+        "size": {
+          "x": 64,
+          "y": 64
+        }
+      },
+      "fields": {
+        "kind": "hole"
+      }
+    },
+    {
+      "sceneKey": "flag",
+      "tag": "Flag",
+      "name": "Flag",
+      "type": "Flag",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 1384,
+          "y": 918
+        },
+        "rotation": 0,
+        "size": {
+          "x": 48,
+          "y": 90
+        }
+      },
+      "fields": {}
+    },
+    {
+      "sceneKey": "sign",
+      "tag": "Title",
+      "name": "Title",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 960,
+          "y": 280
+        },
+        "rotation": 0,
+        "size": {
+          "x": 1080,
+          "y": 300
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Mini Golf",
+            "fontFamily": "Chewy",
+            "fontSize": 190,
+            "color": "#fff6d5",
+            "align": "center",
+            "sortingOrder": 2
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "#6b4a2b",
+            "imagePath": "",
+            "cornerRadius": 40,
+            "sortingOrder": 1
+          }
+        },
+        {
+          "type": "Animator",
+          "fields": {
+            "clips": [
+              {
+                "name": "drop",
+                "duration": 1.2,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.position.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": -300,
+                        "ease": "bounceOut"
+                      },
+                      {
+                        "t": 1.2,
+                        "v": 280,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              }
+            ],
+            "asset": "",
+            "defaultClip": "drop",
+            "playOnStart": true,
+            "speed": 1
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "play",
+      "tag": "PlayButton",
+      "name": "Play button",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 960,
+          "y": 610
+        },
+        "rotation": 0,
+        "size": {
+          "x": 440,
+          "y": 140
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Play",
+            "fontFamily": "Chewy",
+            "fontSize": 96,
+            "color": "#2b1b0a",
+            "align": "center",
+            "sortingOrder": 4
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "#e9a23b",
+            "imagePath": "",
+            "cornerRadius": 36,
+            "sortingOrder": 3
+          }
+        },
+        {
+          "type": "Button",
+          "fields": {
+            "sortingOrder": 3
+          }
+        },
+        {
+          "type": "ButtonAction",
+          "fields": {
+            "action": "newGame",
+            "target": "hole1",
+            "hoverColor": "#f6bd5c"
+          }
+        },
+        {
+          "type": "Animator",
+          "fields": {
+            "clips": [
+              {
+                "name": "pulse",
+                "duration": 1.6,
+                "loop": true,
+                "tracks": [
+                  {
+                    "path": "transform.size.x",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 440,
+                        "ease": "easeInOut"
+                      },
+                      {
+                        "t": 0.8,
+                        "v": 470,
+                        "ease": "easeInOut"
+                      },
+                      {
+                        "t": 1.6,
+                        "v": 440,
+                        "ease": "linear"
+                      }
+                    ]
+                  },
+                  {
+                    "path": "transform.size.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 140,
+                        "ease": "easeInOut"
+                      },
+                      {
+                        "t": 0.8,
+                        "v": 150,
+                        "ease": "easeInOut"
+                      },
+                      {
+                        "t": 1.6,
+                        "v": 140,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              }
+            ],
+            "asset": "",
+            "defaultClip": "pulse",
+            "playOnStart": true,
+            "speed": 1
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "hint",
+      "tag": "Hint",
+      "name": "Hint",
+      "type": "UIElement",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 960,
+          "y": 770
+        },
+        "rotation": 0,
+        "size": {
+          "x": 900,
+          "y": 70
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Text",
+          "fields": {
+            "text": "Pull back from the ball and let go to putt",
+            "fontFamily": "Chewy",
+            "fontSize": 46,
+            "color": "#fff6d5",
+            "align": "center",
+            "sortingOrder": 4
+          }
+        },
+        {
+          "type": "UIContainer",
+          "fields": {
+            "color": "rgba(31,42,36,0.55)",
+            "imagePath": "",
+            "cornerRadius": 24,
+            "sortingOrder": 3
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "camera",
+      "tag": "MainCamera",
+      "name": "Camera",
+      "type": "MainCamera",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 960,
+          "y": 540
+        },
+        "rotation": 0,
+        "size": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "fields": {},
+      "components": [
+        {
+          "type": "Camera",
+          "fields": {
+            "zoom": 1
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -20,6 +20,7 @@ enum SelfTest {
 
         // 1. Host + bridge boot: ES modules load over the embedded HTTP server.
         let ready = await model.waitUntilReady(timeout: 20)
+        if ready, model.currentScene != "hole1" { try? await model.loadScene("hole1") }   // the sample starts on its main menu; most checks need a hole
         check("runtime boots over HTTP (ES modules)", ready, "port \(model.server?.port ?? 0), scenes \(model.sceneIDs)")
         guard ready else { print("Logs:"); model.logs.forEach { print("  [\($0.level)] \($0.text)") }; return false }
 

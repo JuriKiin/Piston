@@ -1149,7 +1149,7 @@
       "transform": {
         "position": {
           "x": 500.0,
-          "y": -20.0
+          "y": -30.0
         },
         "rotation": 0,
         "size": {
@@ -1162,7 +1162,7 @@
         {
           "type": "Camera",
           "fields": {
-            "zoom": 1.28
+            "zoom": 1.263
           }
         }
       ]
@@ -1175,13 +1175,13 @@
       "parentKey": null,
       "transform": {
         "position": {
-          "x": 74.5,
-          "y": 34
+          "x": 175,
+          "y": 62
         },
         "rotation": 0,
         "size": {
-          "x": 120,
-          "y": 40
+          "x": 290,
+          "y": 80
         }
       },
       "fields": {},
@@ -1191,7 +1191,7 @@
           "fields": {
             "text": "Stroke 0",
             "fontFamily": "Chewy",
-            "fontSize": 20,
+            "fontSize": 44,
             "color": "#ffffff",
             "align": "center",
             "sortingOrder": 2
@@ -1202,7 +1202,7 @@
           "fields": {
             "color": "#1f2a24",
             "imagePath": "",
-            "cornerRadius": 8,
+            "cornerRadius": 16,
             "sortingOrder": 1
           }
         }
@@ -1216,13 +1216,13 @@
       "parentKey": null,
       "transform": {
         "position": {
-          "x": 206.5,
-          "y": 34
+          "x": 440,
+          "y": 62
         },
         "rotation": 0,
         "size": {
-          "x": 120,
-          "y": 40
+          "x": 200,
+          "y": 80
         }
       },
       "fields": {},
@@ -1232,7 +1232,7 @@
           "fields": {
             "text": "Par 2",
             "fontFamily": "Chewy",
-            "fontSize": 20,
+            "fontSize": 44,
             "color": "#ffffff",
             "align": "center",
             "sortingOrder": 1
@@ -1243,14 +1243,14 @@
           "fields": {
             "color": "#26332c",
             "imagePath": "",
-            "cornerRadius": 8,
+            "cornerRadius": 16,
             "sortingOrder": 0
           }
         },
         {
           "type": "LevelInfo",
           "fields": {
-            "title": "Hole 1: Straight Shot",
+            "title": "Hole 1",
             "par": 2,
             "nextScene": "hole2"
           }
@@ -1266,12 +1266,12 @@
       "transform": {
         "position": {
           "x": 960,
-          "y": 34
+          "y": 62
         },
         "rotation": 0,
         "size": {
-          "x": 520,
-          "y": 40
+          "x": 300,
+          "y": 88
         }
       },
       "fields": {},
@@ -1279,9 +1279,9 @@
         {
           "type": "Text",
           "fields": {
-            "text": "Hole 1 \u00b7 Straight Shot",
+            "text": "Hole 1",
             "fontFamily": "Chewy",
-            "fontSize": 20,
+            "fontSize": 54,
             "color": "#ffffff",
             "align": "center",
             "sortingOrder": 2
@@ -1292,8 +1292,88 @@
           "fields": {
             "color": "#1f2a24",
             "imagePath": "",
-            "cornerRadius": 8,
+            "cornerRadius": 18,
             "sortingOrder": 1
+          }
+        }
+      ]
+    },
+    {
+      "sceneKey": "scorecard",
+      "tag": "Scorecard",
+      "name": "Score card",
+      "type": "Scorecard",
+      "parentKey": null,
+      "transform": {
+        "position": {
+          "x": 960,
+          "y": 540
+        },
+        "rotation": 0,
+        "size": {
+          "x": 1560,
+          "y": 700
+        }
+      },
+      "fields": {
+        "space": "Screen"
+      },
+      "components": [
+        {
+          "type": "Animator",
+          "fields": {
+            "clips": [
+              {
+                "name": "slideIn",
+                "duration": 0.8,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.position.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": -460,
+                        "ease": "backOut"
+                      },
+                      {
+                        "t": 0.8,
+                        "v": 540,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              },
+              {
+                "name": "slideOut",
+                "duration": 0.5,
+                "loop": false,
+                "tracks": [
+                  {
+                    "path": "transform.position.y",
+                    "keys": [
+                      {
+                        "t": 0,
+                        "v": 540,
+                        "ease": "easeIn"
+                      },
+                      {
+                        "t": 0.5,
+                        "v": -460,
+                        "ease": "linear"
+                      }
+                    ]
+                  }
+                ],
+                "events": []
+              }
+            ],
+            "asset": "",
+            "defaultClip": "",
+            "playOnStart": false,
+            "speed": 1
           }
         }
       ]

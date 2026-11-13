@@ -127,24 +127,63 @@ enum SidebarMode: String, CaseIterable {
 
 struct LeftPanel: View {
     @ObservedObject var model: EditorModel
+    @AppStorage("pane.scenes.collapsed") private var scenesCollapsed = false
+    @AppStorage("pane.hierarchy.collapsed") private var hierarchyCollapsed = false
+    @AppStorage("pane.project.collapsed") private var projectCollapsed = false
 
     var body: some View {
-        // Scene (scenes + hierarchy) above, Project (files) below; drag the divider to resize.
+        // Scenes, Hierarchy and Project are separate panes: drag a divider to resize, click a header to collapse.
         VSplitView {
-            VStack(spacing: 0) {
-                PanelTitle(text: "Scene", icon: "square.grid.3x3")
-                Divider()
-                SceneListView(model: model)
-            }
-            .frame(minHeight: 60, idealHeight: 320)
-            VStack(spacing: 0) {
-                PanelTitle(text: "Project", icon: "folder")
-                Divider()
-                ExplorerView(model: model)
-            }
-            .frame(minHeight: 60, idealHeight: 320)
+            pane(collapsed: $scenesCollapsed, ideal: 190) {
+                PaneHeader(title: "Scenes", count: model.sceneIDs.count, icon: "rectangle.on.rectangle", collapsed: $scenesCollapsed) { EmptyView() }
+            } content: { ScenesList(model: model) }
+            pane(collapsed: $hierarchyCollapsed, ideal: 300) {
+                PaneHeader(title: "Hierarchy", count: model.entities.count, icon: "square.grid.3x3", collapsed: $hierarchyCollapsed) { HierarchyAddMenu(model: model) }
+            } content: { HierarchyList(model: model) }
+            pane(collapsed: $projectCollapsed, ideal: 260) {
+                PaneHeader(title: "Project", count: nil, icon: "folder", collapsed: $projectCollapsed) { EmptyView() }
+            } content: { ExplorerView(model: model) }
         }
         .panelBar()
+    }
+
+    private func pane<Header: View, Content: View>(collapsed: Binding<Bool>, ideal: CGFloat, @ViewBuilder header: () -> Header, @ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            header()
+            if !collapsed.wrappedValue { Divider(); content() }
+        }
+        .frame(minHeight: collapsed.wrappedValue ? 28 : 80, idealHeight: collapsed.wrappedValue ? 28 : ideal, maxHeight: collapsed.wrappedValue ? 28 : .infinity)
+    }
+}
+
+/// A pane's title bar: click the chevron or the title to collapse it. `trailing` holds the pane's own buttons.
+struct PaneHeader<Trailing: View>: View {
+    let title: String
+    let count: Int?
+    let icon: String
+    @Binding var collapsed: Bool
+    @ViewBuilder var trailing: () -> Trailing
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button { withAnimation(.easeInOut(duration: 0.15)) { collapsed.toggle() } } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).rotationEffect(.degrees(collapsed ? 0 : 90)).frame(width: 10)
+                    Image(systemName: icon).font(.caption)
+                    Text(title.uppercased()).font(.caption.weight(.semibold))
+                    if let count { Text("\(count)").font(.caption2.monospacedDigit()).padding(.horizontal, 5).padding(.vertical, 1).background(.quaternary, in: Capsule()) }
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            trailing().controlSize(.small)
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 10)
+        .frame(height: 28)
+        .background(Color(nsColor: .windowBackgroundColor).opacity(0.6))
+        .help(collapsed ? "Expand \(title)" : "Collapse \(title)")
     }
 }
 
@@ -163,36 +202,48 @@ struct PanelTitle: View {
     }
 }
 
-struct SceneListView: View {
+/// The project's scenes as a compact list: one tight row each, the open scene highlighted, an orange dot when it has unsaved changes.
+struct ScenesList: View {
     @ObservedObject var model: EditorModel
 
     var body: some View {
         List {
-            Section("Scenes") {
-                ForEach(model.sceneIDs, id: \.self) { id in
-                    Button {
-                        model.activeTab = .scene
-                        Task { try? await model.loadScene(id) }
-                    } label: {
-                        HStack {
-                            Image(systemName: "photo")
-                            Text(id)
-                            Spacer()
-                            if model.currentScene == id && model.dirty { Circle().fill(.orange).frame(width: 7, height: 7) }
-                        }
+            ForEach(model.sceneIDs, id: \.self) { id in
+                let current = model.currentScene == id
+                Button {
+                    model.activeTab = .scene
+                    Task { try? await model.loadScene(id) }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: current ? "play.rectangle.fill" : "rectangle").font(.caption).foregroundStyle(current ? Color.accentColor : .secondary).frame(width: 16)
+                        Text(id).font(.callout).lineLimit(1)
+                        Spacer(minLength: 0)
+                        if current && model.dirty { Circle().fill(.orange).frame(width: 7, height: 7) }
                     }
-                    .buttonStyle(.plain)
-                    .fontWeight(model.currentScene == id ? .semibold : .regular)
+                    .padding(.vertical, 3).padding(.horizontal, 6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(current ? Color.accentColor.opacity(0.18) : .clear, in: RoundedRectangle(cornerRadius: 5))
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .listRowInsets(EdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 6))
+                .listRowSeparator(.hidden)
             }
-            Section {
-                ForEach(model.hierarchyRows()) { row in
-                    if let e = model.entities.first(where: { $0.key == row.key }) {
-                        HierarchyRowView(model: model, entity: e, row: row)
-                    }
+        }
+        .listStyle(.plain)
+        .environment(\.defaultMinListRowHeight, 24)
+    }
+}
+
+struct HierarchyList: View {
+    @ObservedObject var model: EditorModel
+
+    var body: some View {
+        List {
+            ForEach(model.hierarchyRows()) { row in
+                if let e = model.entities.first(where: { $0.key == row.key }) {
+                    HierarchyRowView(model: model, entity: e, row: row)
                 }
-            } header: {
-                HierarchyHeader(model: model)
             }
         }
         .listStyle(.sidebar)

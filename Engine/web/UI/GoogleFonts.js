@@ -13,6 +13,12 @@ class GoogleFontsImpl {
         this._local = null;
     }
 
+    /** True for a path to a font file (./assets/fonts/Chewy.ttf): the Text font field accepts either a family name or a file. */
+    isFile(name) { return typeof name === 'string' && /\.(ttf|otf|woff2?)$/i.test(name); }
+
+    /** The CSS family to draw with for a font field value: the name itself, or a name derived from the file (Chewy-Regular.ttf → "Chewy-Regular"). */
+    familyFor(name) { return this.isFile(name) ? name.split('/').pop().replace(/\.[^.]+$/, '') : name; }
+
     /** The project's own fonts: assets/fonts/fonts.json, written by the Google Fonts plugin (family → { files: [{ file, weight, style }] }).
      * Fetched once; a project without it just gets {}. */
     localFonts() {
@@ -29,10 +35,18 @@ class GoogleFontsImpl {
     ensure(family) {
         if (!family || this.requested.has(family) || GoogleFontsImpl.GENERIC.has(family.toLowerCase())) return;
         this.requested.add(family);
+        if (this.isFile(family)) { this.loadFile(family); return; }
         this.localFonts().then((local) => {
             const entry = local[family.toLowerCase()];
             if (entry) this.loadLocal(entry); else this.loadRemote(family);
         });
+    }
+
+    /** Loads one font file straight from the project. */
+    loadFile(path) {
+        const face = new FontFace(this.familyFor(path), `url("${path}")`);
+        document.fonts.add(face);
+        face.load().catch((e) => console.error(`Couldn't load font file ${path}: ${e?.message ?? e}`));
     }
 
     loadLocal({ family, files = [] }) {

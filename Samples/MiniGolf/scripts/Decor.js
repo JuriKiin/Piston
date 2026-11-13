@@ -3,7 +3,7 @@ import { Vector2 } from "@piston/Physics/Vector2.js";
 import { SpriteRenderer } from "@piston/SpriteRenderer.js";
 import { EntityRegistry } from "@piston/EntityRegistry.js";
 
-const KINDS = ['tree', 'bush', 'flowers', 'pine', 'windmill', 'hub', 'boost'];
+const KINDS = ['tree', 'bush', 'flowers', 'pine', 'windmill', 'hub', 'boost', 'ball', 'hole'];
 
 /** Scenery with no physics: trees, bushes, flowers, a windmill tower. Pick the picture with `kind`; scale it with the transform size. */
 export class Decor extends Entity {
@@ -40,8 +40,9 @@ export class Decor extends Entity {
             r.playing = false;
             r.currentFrame = trees[this._kind];
         } else {
-            const file = { hub: 'hub.png', windmill: 'windmill.png', boost: 'boost.png' }[this._kind] ?? 'windmill.png';
-            Object.assign(r, { imagePath: `./assets/art/${file}`, frameWidth: 0, frameHeight: 0, frameCount: 1, anchorY: this._kind === 'windmill' ? 0.8 : 0.5, sortingOrder: this._kind === 'hub' ? 7 : this._kind === 'boost' ? 1 : 6 });
+            const file = { hub: 'hub.png', windmill: 'windmill.png', boost: 'boost.png', ball: 'ball.png', hole: 'hole.png' }[this._kind] ?? 'windmill.png';
+            const frame = this._kind === 'hole' ? 24 : 0; // the hole picture is a 2-frame sheet: show the open hole
+            Object.assign(r, { imagePath: `./assets/art/${file}`, frameWidth: frame, frameHeight: frame, frameCount: 1, anchorY: this._kind === 'windmill' ? 0.8 : 0.5, sortingOrder: this._kind === 'hub' ? 7 : this._kind === 'boost' || this._kind === 'hole' ? 1 : 6 });
             r.playing = false;
         }
     }

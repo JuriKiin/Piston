@@ -326,6 +326,7 @@ struct PathField: View {
 
     private static let imageTypes: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"]
     private static let audioTypes: Set<String> = ["mp3", "wav", "ogg", "m4a", "aac"]
+    private static let fontTypes: Set<String> = ["ttf", "otf", "woff", "woff2"]
 
     var body: some View {
         HStack(spacing: 4) {
@@ -341,7 +342,7 @@ struct PathField: View {
         }, isTargeted: { targeted = $0 })
     }
 
-    private var placeholder: String { field.accept == "image" ? "./assets/image.png" : field.accept == "audio" ? "./assets/sound.mp3" : "./path" }
+    private var placeholder: String { field.accept == "image" ? "./assets/image.png" : field.accept == "audio" ? "./assets/sound.mp3" : field.accept == "font" ? "Font name, or drop a font file" : "./path" }
 
     private func relative(_ url: URL) -> String? {
         guard let root = model.projectURL?.resolvingSymlinksInPath().path else { return nil }
@@ -350,6 +351,7 @@ struct PathField: View {
         let ext = url.pathExtension.lowercased()
         if field.accept == "image", !Self.imageTypes.contains(ext) { return nil }
         if field.accept == "audio", !Self.audioTypes.contains(ext) { return nil }
+        if field.accept == "font", !Self.fontTypes.contains(ext) { return nil }
         return "./" + p.dropFirst(root.count + 1)
     }
 
@@ -358,13 +360,15 @@ struct PathField: View {
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
-        panel.directoryURL = root.appendingPathComponent("assets", isDirectory: true)
+        let folder = field.accept == "font" ? "assets/fonts" : "assets"   // fonts downloaded by the Google Fonts plugin live in assets/fonts
+        panel.directoryURL = root.appendingPathComponent(folder, isDirectory: true)
+        if !FileManager.default.fileExists(atPath: panel.directoryURL!.path) { panel.directoryURL = root.appendingPathComponent("assets", isDirectory: true) }
         if !FileManager.default.fileExists(atPath: panel.directoryURL!.path) { panel.directoryURL = root }
         panel.message = "Choose a file from the project (files from elsewhere are copied into assets/)"
         guard panel.runModal() == .OK, var url = panel.url else { return }
         if relative(url) == nil, FileManager.default.fileExists(atPath: url.path) {
             // Outside the project: copy it into assets/ so the game (and builds) can find it.
-            let assets = root.appendingPathComponent("assets", isDirectory: true)
+            let assets = root.appendingPathComponent(folder, isDirectory: true)
             try? FileManager.default.createDirectory(at: assets, withIntermediateDirectories: true)
             var dest = assets.appendingPathComponent(url.lastPathComponent)
             var n = 2
