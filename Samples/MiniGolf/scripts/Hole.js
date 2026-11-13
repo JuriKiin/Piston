@@ -39,9 +39,8 @@ export class Hole extends Entity {
         this.rigidbody = rb;
 
         this.renderer = this.addComponent(new SpriteRenderer({
-            imagePath: './assets/art/hole.png', frameWidth: 24, frameHeight: 24, frameCount: 2, columns: 2, fps: 0,
+            imagePath: './assets/art/hole.png', frameWidth: 96, frameHeight: 96, frameCount: 2, columns: 2, fps: 0,
         }));
-        this.renderer.pixelArt = true;
         this.#showFrame(0);
     }
 

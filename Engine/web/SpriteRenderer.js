@@ -131,6 +131,7 @@ export class SpriteRenderer extends Component {
         if (!this.loaded) return;
         ctx.globalAlpha *= this.opacity;
         ctx.imageSmoothingEnabled = !this.pixelArt;
+        if (!this.pixelArt) ctx.imageSmoothingQuality = 'high'; // large sprites are scaled down: use the good filter
 
         const size = this.entity.transform.size;
         const w = size?.x || this.image.width;

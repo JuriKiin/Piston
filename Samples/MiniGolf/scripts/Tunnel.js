@@ -54,9 +54,8 @@ export class Tunnel extends Entity {
         this.rigidbody = rb;
 
         this.renderer = this.addComponent(new SpriteRenderer({
-            imagePath: './assets/art/tunnel.png', frameWidth: 48, frameHeight: 48, frameCount: 2, columns: 2, fps: 0, sortingOrder: 2,
+            imagePath: './assets/art/tunnel.png', frameWidth: 192, frameHeight: 192, frameCount: 2, columns: 2, fps: 0, sortingOrder: 2,
         }));
-        this.renderer.pixelArt = true;
         this.renderer.playing = false;
         this.renderer.currentFrame = this._role === 'entrance' ? 0 : 1;
     }

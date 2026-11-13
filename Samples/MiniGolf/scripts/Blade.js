@@ -31,7 +31,6 @@ export class Blade extends Entity {
         this.rigidbody = rb;
 
         this.renderer = this.addComponent(new SpriteRenderer({ imagePath: './assets/art/blade.png', sortingOrder: 5 }));
-        this.renderer.pixelArt = true;
     }
 }
 

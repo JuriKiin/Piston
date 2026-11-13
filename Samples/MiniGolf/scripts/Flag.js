@@ -21,15 +21,14 @@ export class Flag extends Entity {
 
         this.renderer = this.addComponent(new SpriteRenderer({
             imagePath: './assets/art/flag.png',
-            frameWidth: 16,
-            frameHeight: 30,
+            frameWidth: 64,
+            frameHeight: 120,
             frameCount: 4,
             columns: 4,
             fps: 6,
             anchorY: 1,
             sortingOrder: 4,
         }));
-        this.renderer.pixelArt = true;
     }
 }
 

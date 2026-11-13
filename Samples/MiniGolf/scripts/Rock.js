@@ -48,9 +48,8 @@ export class Rock extends Entity {
         this.rigidbody = rb;
 
         this.renderer = this.addComponent(new SpriteRenderer({
-            imagePath: './assets/art/rocks.png', frameWidth: 32, frameHeight: 32, frameCount: 3, columns: 3, fps: 0, sortingOrder: 2,
+            imagePath: './assets/art/rocks.png', frameWidth: 128, frameHeight: 128, frameCount: 3, columns: 3, fps: 0, sortingOrder: 2,
         }));
-        this.renderer.pixelArt = true;
         this.renderer.playing = false;
         this.renderer.currentFrame = Math.max(0, Math.min(2, Math.round(this._variant)));
     }

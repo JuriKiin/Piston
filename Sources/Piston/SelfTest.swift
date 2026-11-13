@@ -757,6 +757,16 @@ enum SelfTest {
                 check("the engine's scene validator runs in the editor and reports duplicate ids and self-parenting",
                       msgs.contains { $0.contains("Duplicate sceneKey") } && msgs.contains { $0.contains("own parent") }, "messages \(msgs)")
             }
+            // Multi-select parenting: several entities move under one parent in a single change (what a drag of a multi-selection does).
+            if model.entities.count >= 4 {
+                let keys = model.entities.map(\.key)
+                let parentKey = keys[0], kids = Array(keys[1...3])
+                await model.setParents(kids + [parentKey], to: parentKey)   // the parent itself in the list must be skipped, not looped
+                let allMoved = kids.allSatisfy { (model.entityDoc($0)?["parentKey"] as? String) == parentKey }
+                check("a multi-selection can be parented to one entity in one go (the parent itself is skipped)", allMoved && (model.entityDoc(parentKey)?["parentKey"] as? String) == nil,
+                      "children \(kids.map { (model.entityDoc($0)?["parentKey"] as? String) ?? "nil" })")
+                await model.setParents(kids, to: nil)
+            }
             let countBefore = model.entities.count
             await model.duplicateEntity(target)
             check("Duplicate copies the entity with its components", model.entities.count == countBefore + 1

@@ -59,18 +59,24 @@ extension EditorModel {
     }
 
     /// Drag an entity onto another to parent it; `nil` unparents. Position doesn't change (world-space grouping).
-    func setParent(_ child: String, to parent: String?) async {
-        guard canParent(child, under: parent), let id = currentScene else { return }
-        guard var list = doc["entities"] as? [[String: Any]],
-              let i = list.firstIndex(where: { ($0["sceneKey"] as? String) == child }) else { return }
-        if (list[i]["parentKey"] as? String) == parent { return }
-        list[i]["parentKey"] = parent as Any? ?? NSNull()
+    func setParent(_ child: String, to parent: String?) async { await setParents([child], to: parent) }
+
+    /// The same for a whole selection at once: every entity that can legally move under `parent` does, in one change (one undo step).
+    func setParents(_ children: [String], to parent: String?) async {
+        guard let id = currentScene, var list = doc["entities"] as? [[String: Any]] else { return }
+        var moved = 0
+        for child in children where canParent(child, under: parent) {
+            guard let i = list.firstIndex(where: { ($0["sceneKey"] as? String) == child }), (list[i]["parentKey"] as? String) != parent else { continue }
+            list[i]["parentKey"] = parent as Any? ?? NSNull()
+            moved += 1
+        }
+        guard moved > 0 else { return }
         doc["entities"] = list
         dirty = true
         if let parent { collapsed.remove(parent) }
         let keep = selection, extra = extraSelection
         try? await sendScene(reloadFromDisk: false, id: id) // the runtime rebuilds the group from the document
         if let keep { select(keep); extraSelection = extra }
-        status = parent == nil ? "Unparented" : "Parented"
+        status = parent == nil ? "Unparented \(moved)" : "Parented \(moved) to \(parent.flatMap { p in entities.first { $0.key == p }.map { $0.name.isEmpty ? $0.tag : $0.name } } ?? "parent")"
     }
 }

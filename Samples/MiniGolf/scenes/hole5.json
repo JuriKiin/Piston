@@ -734,7 +734,7 @@
         "maxDragDistance": 180,
         "powerScale": 0.1,
         "pickRadius": 40,
-        "restSpeed": 5,
+        "restSpeed": 0.4,
         "sinkDuration": 0.4,
         "shotCount": 0
       },
@@ -758,8 +758,8 @@
           "type": "SpriteRenderer",
           "fields": {
             "imagePath": "./assets/art/ball.png",
-            "frameWidth": 16,
-            "frameHeight": 16,
+            "frameWidth": 64,
+            "frameHeight": 64,
             "frameCount": 1,
             "columns": 1,
             "fps": 0,
@@ -767,7 +767,7 @@
             "anchorX": 0.5,
             "anchorY": 0.5,
             "opacity": 1,
-            "pixelArt": true,
+            "pixelArt": false,
             "sortingOrder": 3
           }
         },
@@ -979,8 +979,8 @@
           "type": "SpriteRenderer",
           "fields": {
             "imagePath": "./assets/art/hole.png",
-            "frameWidth": 24,
-            "frameHeight": 24,
+            "frameWidth": 96,
+            "frameHeight": 96,
             "frameCount": 2,
             "columns": 2,
             "fps": 0,
@@ -988,7 +988,7 @@
             "anchorX": 0.5,
             "anchorY": 0.5,
             "opacity": 1,
-            "pixelArt": true,
+            "pixelArt": false,
             "sortingOrder": 0
           }
         },

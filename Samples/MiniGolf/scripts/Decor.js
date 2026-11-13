@@ -26,7 +26,6 @@ export class Decor extends Entity {
         this.transform.position = this.position.clone();
         this.transform.size = this.size.clone();
         this.renderer = this.addComponent(new SpriteRenderer({ sortingOrder: 6 }));
-        this.renderer.pixelArt = true;
         this.#show();
     }
 
@@ -36,12 +35,12 @@ export class Decor extends Entity {
         if (!r) return;
         const trees = { tree: 0, bush: 1, flowers: 2, pine: 3 };
         if (this._kind in trees) {
-            Object.assign(r, { imagePath: './assets/art/decor.png', frameWidth: 32, frameHeight: 32, frameCount: 4, columns: 4, fps: 0, anchorY: 0.75, sortingOrder: 6 });
+            Object.assign(r, { imagePath: './assets/art/decor.png', frameWidth: 128, frameHeight: 128, frameCount: 4, columns: 4, fps: 0, anchorY: 0.75, sortingOrder: 6 });
             r.playing = false;
             r.currentFrame = trees[this._kind];
         } else {
             const file = { hub: 'hub.png', windmill: 'windmill.png', boost: 'boost.png', ball: 'ball.png', hole: 'hole.png' }[this._kind] ?? 'windmill.png';
-            const frame = this._kind === 'hole' ? 24 : 0; // the hole picture is a 2-frame sheet: show the open hole
+            const frame = this._kind === 'hole' ? 96 : 0; // the hole picture is a 2-frame sheet: show the open hole
             Object.assign(r, { imagePath: `./assets/art/${file}`, frameWidth: frame, frameHeight: frame, frameCount: 1, anchorY: this._kind === 'windmill' ? 0.8 : 0.5, sortingOrder: this._kind === 'hub' ? 7 : this._kind === 'boost' || this._kind === 'hole' ? 1 : 6 });
             r.playing = false;
         }

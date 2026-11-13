@@ -14,151 +14,196 @@ def hexc(h, a=255): h = h.lstrip('#'); return (int(h[0:2], 16), int(h[2:4], 16),
 def shade(c, f): return (min(255, int(c[0] * f)), min(255, int(c[1] * f)), min(255, int(c[2] * f)), c[3])
 def sheet(w, h, n): return Image.new('RGBA', (w * n, h), (0, 0, 0, 0))
 
-# ---------------------------------------------------------------- ball (16x16): white, shaded bottom-right, highlight top-left
+# ---------------------------------------------------------------- smooth, high-resolution art
+# Everything is drawn at 4x size and shrunk with a good filter, so edges are anti-aliased and the sprites stay sharp when the game scales them.
+SS = 4
+def lerp(a, b, t): return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(4))
+
+class HD:
+    """A drawing surface in final-pixel coordinates (drawn at SS x, downsampled on save)."""
+    def __init__(self, w, h):
+        self.w, self.h = w, h; self.img = Image.new('RGBA', (w * SS, h * SS), (0, 0, 0, 0)); self.d = ImageDraw.Draw(self.img)
+    def box(self, b): return [v * SS for v in b]
+    def _op(self, fn, color):
+        """Draws with `fn`. A translucent colour is composited (not overwritten), so soft shadows and speckles blend with what is underneath."""
+        if isinstance(color, tuple) and len(color) == 4 and color[3] < 255:
+            layer = Image.new('RGBA', self.img.size, (0, 0, 0, 0)); fn(ImageDraw.Draw(layer))
+            self.img = Image.alpha_composite(self.img, layer); self.d = ImageDraw.Draw(self.img)
+        else: fn(self.d)
+    def ellipse(self, b, fill=None, outline=None, width=1): self._op(lambda d: d.ellipse(self.box(b), fill=fill, outline=outline, width=int(width * SS)), fill or outline)
+    def circle(self, cx, cy, r, fill=None, outline=None, width=1): self.ellipse([cx - r, cy - r, cx + r, cy + r], fill, outline, width)
+    def polygon(self, pts, fill=None, outline=None): self._op(lambda d: d.polygon([(x * SS, y * SS) for x, y in pts], fill=fill, outline=outline), fill or outline)
+    def line(self, pts, fill, width=1): self._op(lambda d: d.line([(x * SS, y * SS) for x, y in pts], fill=fill, width=max(1, int(width * SS)), joint='curve'), fill)
+    def rect(self, b, fill=None, outline=None, width=1): self._op(lambda d: d.rectangle(self.box(b), fill=fill, outline=outline, width=int(width * SS)), fill or outline)
+    def rrect(self, b, r, fill=None, outline=None, width=1): self._op(lambda d: d.rounded_rectangle(self.box(b), radius=r * SS, fill=fill, outline=outline, width=int(width * SS)), fill or outline)
+    def sphere(self, cx, cy, r, edge, core, light=(-0.35, -0.4), steps=48):
+        """A shaded ball: concentric discs whose centre drifts toward the light while the colour goes from edge to core."""
+        for i in range(steps):
+            t = i / (steps - 1); rr = r * (1 - 0.92 * t)
+            self.circle(cx + light[0] * r * t * 0.9, cy + light[1] * r * t * 0.9, rr, fill=lerp(edge, core, t ** 0.8))
+    def shadow(self, cx, cy, rx, ry, alpha=70):
+        layer = Image.new('RGBA', self.img.size, (0, 0, 0, 0)); ImageDraw.Draw(layer).ellipse(self.box([cx - rx, cy - ry, cx + rx, cy + ry]), fill=(0, 0, 0, alpha))
+        self.img = Image.alpha_composite(layer, self.img); self.d = ImageDraw.Draw(self.img)
+    def out(self): return self.img.resize((self.w, self.h), Image.LANCZOS)
+
+def paste_frames(frames, name):
+    w, h = frames[0].size; sheet = Image.new('RGBA', (w * len(frames), h), (0, 0, 0, 0))
+    for i, f in enumerate(frames): sheet.paste(f, (i * w, 0))
+    sheet.save(f'{ART}/{name}.png')
+
+# ---------------------------------------------------------------- ball (64x64): shaded white sphere with dimples and a highlight
 def ball():
-    img = Image.new('RGBA', (16, 16), (0, 0, 0, 0)); px = img.load()
-    for y in range(16):
-        for x in range(16):
-            d = math.hypot(x - 7.5, y - 7.5)
-            if d > 7.6: continue
-            if d > 6.5: px[x, y] = hexc('#3b3f4a'); continue
-            light = ((x - 7.5) * -0.6 + (y - 7.5) * -0.8) / 7 * 0.5 + 0.5      # 1 at top-left
-            v = int(150 + 105 * max(0, min(1, light)))
-            px[x, y] = (v, v, min(255, v + 6), 255)
-    for (x, y) in [(5, 4), (6, 4), (5, 5)]: px[x, y] = (255, 255, 255, 255)          # specular
-    for (x, y) in [(8, 8), (10, 7), (7, 10), (9, 10), (11, 9)]: px[x, y] = (205, 208, 215, 255)   # dimples
-    img.save(f'{ART}/ball.png')
+    g = HD(64, 64); g.shadow(33, 36, 27, 24, 60)
+    g.circle(32, 32, 28.5, fill=hexc('#3b3f4a'))
+    g.sphere(32, 32, 26.5, hexc('#aeb4c2'), hexc('#ffffff'), light=(-0.38, -0.42))
+    rnd = random.Random(4)
+    for ring, (rad, n) in enumerate([(0, 1), (9, 6), (17, 11), (23, 15)]):             # dimples: rings that squash toward the rim
+        for k in range(n):
+            a = (k / n) * 2 * math.pi + ring * 0.4; x = 32 + math.cos(a) * rad - 2; y = 32 + math.sin(a) * rad - 3
+            if math.hypot(x - 32, y - 32) > 24: continue
+            squash = 1 - 0.55 * (math.hypot(x - 32, y - 32) / 26) ** 2
+            g.ellipse([x - 2.1 * squash, y - 2.1, x + 2.1 * squash, y + 2.1], fill=(176, 182, 196, 150))
+    g.ellipse([17, 13, 29, 22], fill=(255, 255, 255, 235))                              # specular highlight
+    g.ellipse([21, 15, 26, 18], fill=(255, 255, 255, 255))
+    g.out().save(f'{ART}/ball.png')
 
-# ---------------------------------------------------------------- flag (4 frames of 16x30): waving cloth
+# ---------------------------------------------------------------- flag (4 frames of 64x120): metal pole, cloth waving in a travelling wave
 def flag():
-    fw, fh, n = 16, 30, 4
-    img = sheet(fw, fh, n); d = ImageDraw.Draw(img)
-    for f in range(n):
-        ox = f * fw
-        d.rectangle([ox + 3, 2, ox + 4, 29], fill=hexc('#d9d9e0'))                  # pole
-        d.rectangle([ox + 4, 2, ox + 4, 29], fill=hexc('#9a9aa6'))
-        d.ellipse([ox + 2, 0, ox + 5, 3], fill=hexc('#f4d35e'))                      # finial
-        for x in range(5, 15):                                                        # cloth: a wave travelling to the tip
-            wave = math.sin((x * 0.9) - f * math.pi / 2) * 1.6
-            top = 4 + wave + (x - 5) * 0.25; bot = 13 + wave - (x - 5) * 0.25
-            for y in range(int(round(top)), int(round(bot)) + 1):
-                d.point((ox + x, y), fill=hexc('#e63946') if y < (top + bot) / 2 + 2 else hexc('#b3202c'))
-        d.ellipse([ox + 0, 27, ox + 8, 30], fill=hexc('#3a2a1a'))                    # soil at the foot
-    img.save(f'{ART}/flag.png')
+    frames = []
+    for f in range(4):
+        g = HD(64, 120); g.shadow(20, 112, 17, 5, 70)
+        g.ellipse([8, 104, 34, 116], fill=hexc('#4a3322')); g.ellipse([10, 104, 32, 112], fill=hexc('#6b4a31'))        # mound of soil
+        g.rect([16, 8, 20, 110], fill=hexc('#d7dae3')); g.rect([16, 8, 17.5, 110], fill=hexc('#f4f6fb')); g.rect([19, 8, 20, 110], fill=hexc('#9a9eae'))
+        g.sphere(18, 8, 5.5, hexc('#c98f1a'), hexc('#ffe27a'))
+        top, bot = [], []
+        for i in range(0, 41):
+            x = 20 + i; w = math.sin(i * 0.28 - f * math.pi / 2) * 4.2 * (0.35 + i / 40)
+            top.append((x, 14 + w + i * 0.12)); bot.append((x, 46 + w - i * 0.35))
+        g.polygon(top + bot[::-1], fill=hexc('#e63946'))
+        for i in range(0, 40, 2):                                                                                    # fold shading
+            shade_c = (160, 28, 40, 140) if math.sin(i * 0.28 - f * math.pi / 2) < 0 else (255, 120, 125, 90)
+            g.polygon([top[i], top[i + 1], bot[i + 1], bot[i]], fill=shade_c)
+        g.line(top, hexc('#b3202c'), 1.4); g.line(bot, hexc('#8f1520'), 1.4)
+        frames.append(g.out())
+    paste_frames(frames, 'flag')
 
-# ---------------------------------------------------------------- rocks (3 frames of 32x32)
+# ---------------------------------------------------------------- rocks (3 frames of 128x128)
 def rocks():
-    img = sheet(32, 32, 3); px = img.load()
-    shapes = [  # (radius x, radius y, bumpiness seed)
-        (13, 12, 3), (14, 10, 7), (11, 13, 11)]
-    for f, (rx, ry, seed) in enumerate(shapes):
-        rnd = random.Random(seed); bumps = [rnd.uniform(0.82, 1.08) for _ in range(12)]
-        for y in range(32):
-            for x in range(32):
-                dx, dy = (x - 15.5) / rx, (y - 15.5) / ry
-                ang = (math.atan2(dy, dx) + math.pi) / (2 * math.pi) * 12
-                r = bumps[int(ang) % 12] * (1 - (ang % 1)) + bumps[(int(ang) + 1) % 12] * (ang % 1)
-                dist = math.hypot(dx, dy)
-                if dist > r: continue
-                light = (-(dx) * 0.5 - (dy) * 0.8)
-                base = 130 + int(60 * light) + (8 if (x * 7 + y * 13) % 11 == 0 else 0)
-                c = (base, base - 4, base - 12, 255)
-                if dist > r - 0.16: c = (58, 56, 62, 255)                              # outline
-                elif dist > r - 0.3: c = (int(c[0] * 0.78), int(c[1] * 0.78), int(c[2] * 0.8), 255)
-                px[f * 32 + x, y] = c
-        for (cx, cy) in [(11, 11), (12, 11), (11, 12)]: px[f * 32 + cx, cy] = (225, 224, 215, 255)   # highlight
-        for i in range(5): px[f * 32 + 14 + i, 17 + i // 2] = (92, 90, 96, 255)                      # a crack
-    img.save(f'{ART}/rocks.png')
+    frames = []
+    for seed, (rx, ry) in zip((3, 7, 11), ((50, 46), (56, 38), (44, 52))):
+        rnd = random.Random(seed); g = HD(128, 128); g.shadow(66, 78, rx * 0.95, ry * 0.5, 70)
+        n = 18; radii = [rnd.uniform(0.84, 1.08) for _ in range(n)]
+        pts = [(64 + math.cos(2 * math.pi * k / n) * rx * radii[k], 62 + math.sin(2 * math.pi * k / n) * ry * radii[k]) for k in range(n)]
+        g.polygon(pts, fill=hexc('#3a383e'))                                                                                     # outline layer
+        inner = [(64 + (x - 64) * 0.94, 62 + (y - 62) * 0.94) for x, y in pts]
+        g.polygon(inner, fill=hexc('#8b8a90'))
+        for shade_c, scale, dx, dy in ((hexc('#a2a1a8'), 0.8, -4, -5), (hexc('#b8b7bd'), 0.55, -9, -10), (hexc('#cfcfd2'), 0.28, -13, -15)):   # lit facets toward the top left
+            g.polygon([(64 + (x - 64) * scale + dx, 62 + (y - 62) * scale + dy) for x, y in inner], fill=shade_c)
+        g.polygon([(x + 5, y + 7) for x, y in [(64 + (x - 64) * 0.55, 62 + (y - 62) * 0.55) for x, y in inner]], fill=(70, 68, 76, 45))   # shaded underside
+        for _ in range(26):
+            a = rnd.uniform(0, 6.28); r = rnd.uniform(0, 0.8); g.circle(64 + math.cos(a) * rx * r, 62 + math.sin(a) * ry * r, rnd.uniform(0.8, 1.8), fill=(90, 88, 96, 120))
+        crack = [(58, 56), (63, 63), (61, 70), (67, 78)]; g.line(crack, (62, 60, 68, 220), 1.4)
+        frames.append(g.out())
+    paste_frames(frames, 'rocks')
 
-# ---------------------------------------------------------------- decor (4 frames of 32x32): tree, bush, flowers, pine
+# ---------------------------------------------------------------- decor (4 frames of 128x128): tree, bush, flowers, pine
 def decor():
-    img = sheet(32, 32, 4); d = ImageDraw.Draw(img)
-    def blob(ox, cx, cy, r, base):
-        for y in range(32):
-            for x in range(32):
-                dist = math.hypot(x - cx, y - cy)
-                if dist <= r:
-                    light = 1.0 - ((x - cx) * 0.4 + (y - cy) * 0.7) / (r * 1.1)
-                    d.point((ox + x, y), fill=shade(hexc(base), 0.62 + 0.5 * max(0, min(1, light))))
-    # tree
-    d.rectangle([13, 19, 17, 29], fill=hexc('#6b4423')); d.rectangle([13, 19, 14, 29], fill=hexc('#855a30'))
-    blob(0, 15, 13, 11, '#2e9e4f'); blob(0, 10, 16, 6, '#34ad57'); blob(0, 21, 15, 6, '#2a8c47')
-    # bush
-    blob(32, 16, 19, 11, '#3fa957'); blob(32, 10, 21, 6, '#47b861'); blob(32, 22, 21, 6, '#38a050')
-    for (x, y) in [(12, 16), (19, 18), (15, 23)]: d.point((32 + x, y), fill=hexc('#e63946'))
-    # flowers
-    for (x, y, c) in [(8, 10, '#ffd166'), (20, 8, '#ef476f'), (14, 19, '#ffffff'), (24, 20, '#ffd166'), (7, 24, '#c77dff'), (18, 26, '#ef476f')]:
-        d.rectangle([64 + x - 1, y, 64 + x + 1, y + 2], fill=hexc(c)); d.point((64 + x, y + 1), fill=hexc('#ffa200'))
-        d.point((64 + x, y + 3), fill=hexc('#2e7d32')); d.point((64 + x, y + 4), fill=hexc('#2e7d32'))
-    # pine
-    d.rectangle([14, 24, 17, 30], fill=hexc('#5a3a1e')) if False else d.rectangle([96 + 14, 24, 96 + 17, 30], fill=hexc('#5a3a1e'))
-    for i, (w, y) in enumerate([(13, 20), (10, 13), (7, 6)]):
-        d.polygon([(96 + 16 - w, y + 7), (96 + 16 + w, y + 7), (96 + 16, y - 6)], fill=hexc('#1f7a3d' if i % 2 == 0 else '#238c46'), outline=hexc('#15502a'))
-    img.save(f'{ART}/decor.png')
+    frames = []
+    g = HD(128, 128); g.shadow(66, 112, 44, 10, 60)                                                                               # tree
+    g.polygon([(57, 74), (71, 74), (74, 112), (54, 112)], fill=hexc('#6b4423')); g.polygon([(57, 74), (62, 74), (62, 112), (54, 112)], fill=hexc('#8a5a30'))
+    for cx, cy, r, base in ((64, 50, 34, '#2e9e4f'), (40, 62, 24, '#2a8c47'), (88, 62, 24, '#2a8c47'), (60, 34, 24, '#34ad57'), (78, 42, 18, '#3bb862')):
+        g.sphere(cx, cy, r, hexc('#1f6e36'), hexc(base), light=(-0.3, -0.4), steps=26)
+    rnd = random.Random(2)
+    for _ in range(60): g.circle(rnd.uniform(30, 98), rnd.uniform(18, 80), rnd.uniform(1.2, 2.6), fill=(110, 205, 120, 110))
+    frames.append(g.out())
+    g = HD(128, 128); g.shadow(66, 106, 46, 10, 60)                                                                               # bush
+    for cx, cy, r in ((64, 74, 36), (38, 84, 26), (92, 84, 26), (54, 62, 24), (78, 64, 22)):
+        g.sphere(cx, cy, r, hexc('#2c8a47'), hexc('#4fc468'), light=(-0.3, -0.4), steps=24)
+    for x, y in ((50, 70), (76, 62), (62, 88), (88, 80), (40, 86)): g.circle(x, y, 3.2, fill=hexc('#e63946')); g.circle(x - 1, y - 1, 1.1, fill=(255, 200, 200, 255))
+    frames.append(g.out())
+    g = HD(128, 128); g.shadow(66, 108, 40, 8, 40)                                                                                # flowers
+    for x, y, c, s in ((34, 52, '#ffd166', 1.0), (84, 40, '#ef476f', 1.1), (58, 78, '#ffffff', 1.0), (96, 82, '#ffd166', 0.9), (28, 96, '#c77dff', 0.9), (72, 100, '#ef476f', 0.9)):
+        g.line([(x, y + 6), (x + 1, y + 26 * s)], hexc('#2e7d32'), 2.2); g.polygon([(x + 1, y + 20 * s), (x + 11, y + 14 * s), (x + 3, y + 25 * s)], fill=hexc('#3a9a42'))
+        for k in range(6):
+            a = k * math.pi / 3; g.circle(x + math.cos(a) * 6.5 * s, y + math.sin(a) * 6.5 * s, 5.2 * s, fill=hexc(c), outline=(0, 0, 0, 40), width=0.6)
+        g.circle(x, y, 4.4 * s, fill=hexc('#ffa200')); g.circle(x - 1, y - 1, 1.4, fill=hexc('#ffe27a'))
+    frames.append(g.out())
+    g = HD(128, 128); g.shadow(66, 116, 32, 7, 60)                                                                               # pine
+    g.rect([57, 96, 71, 118], fill=hexc('#5a3a1e')); g.rect([57, 96, 62, 118], fill=hexc('#74502b'))
+    for i, (w, y) in enumerate(((50, 100), (42, 78), (34, 56), (24, 34))):
+        g.polygon([(64 - w, y), (64 + w, y), (64, y - 40)], fill=hexc('#15602e'))
+        g.polygon([(64 - w, y), (64, y), (64, y - 40)], fill=hexc('#1f8a43' if i % 2 == 0 else '#24984b'))
+        g.line([(64 - w + 4, y - 2), (64 + w - 4, y - 2)], hexc('#104a22'), 1.6)
+    frames.append(g.out())
+    paste_frames(frames, 'decor')
 
-# ---------------------------------------------------------------- windmill: tower (48x64) and a blade bar (110x10; two arms with sails)
+# ---------------------------------------------------------------- windmill: tower (192x256), blade bar (440x32 with two sails) and hub (64x64)
 def windmill():
-    img = Image.new('RGBA', (48, 64), (0, 0, 0, 0)); d = ImageDraw.Draw(img)
-    for y in range(18, 62):                                               # tapered brick tower
-        half = 10 + (y - 18) * 0.22
-        for x in range(int(24 - half), int(24 + half) + 1):
-            brick = (y // 4 + (x // 6 if (y // 4) % 2 else (x + 3) // 6)) % 2
-            c = hexc('#d9cdb8') if brick else hexc('#c9bba3')
-            if x < 24 - half + 2: c = shade(c, 0.78)
-            if x > 24 + half - 3: c = shade(c, 0.82)
-            d.point((x, y), fill=c)
-    d.rectangle([19, 46, 28, 62], fill=hexc('#5b3a29')); d.ellipse([19, 42, 28, 50], fill=hexc('#5b3a29'))   # door
-    d.polygon([(8, 20), (40, 20), (24, 2)], fill=hexc('#b5302b'), outline=hexc('#7a1f1b'))                   # roof
-    d.polygon([(8, 20), (24, 2), (24, 20)], fill=hexc('#c93b35'))
-    d.ellipse([20, 22, 28, 30], fill=hexc('#7ec8e3'), outline=hexc('#4a5568'))                               # window
-    img.save(f'{ART}/windmill.png')
-    blade = Image.new('RGBA', (110, 10), (0, 0, 0, 0)); d = ImageDraw.Draw(blade)
-    d.rectangle([0, 4, 109, 5], fill=hexc('#6b4423'))                                                         # spar
-    for (x0, x1) in [(6, 50), (60, 104)]:                                                                     # sails
-        d.rectangle([x0, 0, x1, 9], fill=hexc('#f1e9d2'), outline=hexc('#8a6a3c'))
-        for x in range(x0 + 6, x1, 7): d.line([x, 0, x, 9], fill=hexc('#cdbf9a'))
-        d.line([x0, 4, x1, 4], fill=hexc('#8a6a3c'))
-    blade.save(f'{ART}/blade.png')
-    hub = Image.new('RGBA', (16, 16), (0, 0, 0, 0)); d = ImageDraw.Draw(hub)
-    d.ellipse([1, 1, 14, 14], fill=hexc('#6b4423'), outline=hexc('#3a2512')); d.ellipse([5, 5, 10, 10], fill=hexc('#d9a441'))
-    hub.save(f'{ART}/hub.png')
+    g = HD(192, 256); g.shadow(98, 244, 70, 10, 60)
+    for y in range(70, 246):
+        half = 40 + (y - 70) * 0.2
+        for_row = (y // 14)
+        g.rect([96 - half, y, 96 + half, y + 1.2], fill=hexc('#d9cdb8'))
+    g.polygon([(56, 70), (136, 70), (150, 246), (42, 246)], fill=hexc('#d6c9b0'))
+    g.polygon([(56, 70), (74, 70), (62, 246), (42, 246)], fill=hexc('#b9ab92')); g.polygon([(124, 70), (136, 70), (150, 246), (134, 246)], fill=hexc('#c2b49b'))
+    for row in range(0, 12):                                                                                                       # brick courses
+        y = 74 + row * 14.5; off = (row % 2) * 9
+        g.line([(52 - row * 0.55, y), (140 + row * 0.55, y)], (150, 135, 110, 150), 1.1)
+        for x in range(0, 9): g.line([(58 + x * 10 + off - row * 0.4, y), (58 + x * 10 + off - row * 0.4, y + 14.5)], (150, 135, 110, 110), 1)
+    g.polygon([(30, 74), (162, 74), (96, 8)], fill=hexc('#a82a25')); g.polygon([(30, 74), (96, 8), (96, 74)], fill=hexc('#c93b35'))
+    g.polygon([(30, 74), (162, 74), (150, 82), (42, 82)], fill=hexc('#7a1f1b'))
+    g.rrect([76, 98, 116, 142], 20, fill=hexc('#5b3a29'), outline=hexc('#3a2418'), width=2) if False else None
+    g.circle(96, 112, 18, fill=hexc('#7ec8e3'), outline=hexc('#4a5568'), width=3); g.line([(96, 94), (96, 130)], hexc('#4a5568'), 2); g.line([(78, 112), (114, 112)], hexc('#4a5568'), 2)
+    g.ellipse([78, 178, 114, 214], fill=hexc('#5b3a29')); g.rect([78, 196, 114, 246], fill=hexc('#5b3a29')); g.rect([78, 196, 90, 246], fill=hexc('#734a34')); g.circle(106, 224, 2.6, fill=hexc('#e9c46a'))
+    g.out().save(f'{ART}/windmill.png')
+    b = HD(440, 32); b.shadow(220, 25, 205, 4, 40)
+    b.rect([0, 14, 439, 18], fill=hexc('#6b4423')); b.rect([0, 14, 439, 15.6], fill=hexc('#8a5a30'))
+    for x0, x1 in ((24, 204), (236, 416)):                                                                                        # sails with a lattice
+        b.rrect([x0, 2, x1, 30], 3, fill=hexc('#f4ecd4'), outline=hexc('#8a6a3c'), width=2)
+        for x in range(int(x0) + 24, int(x1), 24): b.line([(x, 2), (x, 30)], hexc('#cdbf9a'), 1.6)
+        b.line([(x0, 10), (x1, 10)], hexc('#cdbf9a'), 1.4); b.line([(x0, 22), (x1, 22)], hexc('#cdbf9a'), 1.4); b.line([(x0, 16), (x1, 16)], hexc('#8a6a3c'), 2)
+    b.out().save(f'{ART}/blade.png')
+    h = HD(64, 64); h.shadow(33, 36, 26, 22, 60); h.circle(32, 32, 28, fill=hexc('#3a2512'))
+    h.sphere(32, 32, 25, hexc('#7a5230'), hexc('#d9a441'), light=(-0.3, -0.35)); h.circle(32, 32, 10, fill=hexc('#3a2512')); h.sphere(32, 32, 8, hexc('#a67a2d'), hexc('#ffe27a'))
+    h.out().save(f'{ART}/hub.png')
 
-# ---------------------------------------------------------------- tunnel (2 frames of 48x48): stone mouth facing up; frame 1 has an arrow (the exit); the mouth opens downward at rotation 0
+# ---------------------------------------------------------------- tunnel (2 frames of 192x192): stone mouth, opening downward; frame 1 shows the exit arrow
 def tunnel():
-    img = sheet(48, 48, 2); d = ImageDraw.Draw(img)
+    frames = []
     for f in range(2):
-        ox = f * 48
-        d.rounded_rectangle([ox + 4, 8, ox + 43, 44], radius=10, fill=hexc('#8a8d96'), outline=hexc('#4a4d57'))
-        for i in range(6): d.rectangle([ox + 6 + i * 6, 9 + (i % 2) * 2, ox + 9 + i * 6, 12 + (i % 2) * 2], fill=hexc('#a4a7b0'))
-        d.rounded_rectangle([ox + 11, 14, ox + 36, 44], radius=8, fill=hexc('#0e0f14'))
-        d.rounded_rectangle([ox + 13, 18, ox + 34, 44], radius=7, fill=hexc('#1b1d26' if f == 0 else '#27304a'))
+        g = HD(192, 192); g.shadow(98, 178, 74, 10, 60)
+        g.rrect([14, 28, 178, 180], 38, fill=hexc('#4a4d57')); g.rrect([18, 32, 174, 176], 34, fill=hexc('#8e919b'))
+        rnd = random.Random(5)
+        for i in range(8):                                                                                                           # arch stones
+            a0 = math.pi + i * math.pi / 8; a1 = a0 + math.pi / 8
+            pts = [(96 + math.cos(a0) * 70, 100 + math.sin(a0) * 62), (96 + math.cos(a1) * 70, 100 + math.sin(a1) * 62), (96 + math.cos(a1) * 92, 100 + math.sin(a1) * 80), (96 + math.cos(a0) * 92, 100 + math.sin(a0) * 80)]
+            g.polygon(pts, fill=lerp(hexc('#a7aab4'), hexc('#c9ccd6'), rnd.random()), outline=hexc('#4a4d57'))
+        g.rrect([44, 56, 148, 182], 34, fill=hexc('#0e0f14'))
+        for i in range(14): g.rrect([48 + i * 1.4, 60 + i * 1.6, 144 - i * 1.4, 182], 30 - i, fill=lerp(hexc('#10121a'), hexc('#1d2030' if f == 0 else '#27304a'), i / 13))
         if f == 1:
-            d.rectangle([ox + 22, 20, ox + 26, 30], fill=hexc('#7ec8e3'))          # arrow pointing out of the mouth (down)
-            d.polygon([(ox + 24, 40), (ox + 31, 30), (ox + 17, 30)], fill=hexc('#7ec8e3'))
-    img.save(f'{ART}/tunnel.png')
+            g.rect([88, 86, 104, 122], fill=hexc('#7ec8e3')); g.polygon([(96, 160), (126, 122), (66, 122)], fill=hexc('#7ec8e3')); g.polygon([(96, 150), (118, 126), (74, 126)], fill=hexc('#b6e2f2'))
+        frames.append(g.out())
+    paste_frames(frames, 'tunnel')
 
-# ---------------------------------------------------------------- hole (2 frames of 24x24): open, and lit when the ball is in
+# ---------------------------------------------------------------- hole (2 frames of 96x96): open, and lit green when the ball is in
 def hole():
-    img = sheet(24, 24, 2); px = img.load()
+    frames = []
     for f in range(2):
-        for y in range(24):
-            for x in range(24):
-                d = math.hypot(x - 11.5, y - 11.5)
-                if d > 11.4: continue
-                if d > 9.6: v = 0.55 if (x + y) < 23 else 1.0; px[f * 24 + x, y] = (int(70 * v), int(62 * v), int(54 * v), 255)   # lip
-                elif d > 8.6: px[f * 24 + x, y] = (36, 31, 28, 255)
-                else:
-                    depth = 1 - d / 8.6
-                    base = (8, 8, 10) if f == 0 else (30, 92, 48)
-                    px[f * 24 + x, y] = (int(base[0] + 12 * (1 - depth)), int(base[1] + 12 * (1 - depth)), int(base[2] + 14 * (1 - depth)), 255)
-    img.save(f'{ART}/hole.png')
+        g = HD(96, 96); g.circle(48, 50, 46, fill=(0, 0, 0, 70)); g.circle(48, 48, 45, fill=hexc('#2b241e'))
+        for i in range(20): g.circle(48 - i * 0.18, 48 - i * 0.18, 44 - i * 0.6, fill=lerp(hexc('#7d6b58'), hexc('#4a3d30'), i / 19))        # rolled lip, lit from the top left
+        g.circle(48, 50, 36, fill=hexc('#1a1612'))
+        base = hexc('#07070a') if f == 0 else hexc('#1d5c30')
+        for i in range(30): g.circle(48 + i * 0.1, 51 + i * 0.1, 35 - i * 1.0, fill=lerp(hexc('#101014') if f == 0 else hexc('#2f8a4c'), base, i / 29))
+        frames.append(g.out())
+    paste_frames(frames, 'hole')
 
-# ---------------------------------------------------------------- tee marker (2 pegs) and arrow for boost pads (1x 32x32)
+# ---------------------------------------------------------------- boost pad (128x128): gold tile with two chevrons
 def pad():
-    img = Image.new('RGBA', (32, 32), (0, 0, 0, 0)); d = ImageDraw.Draw(img)
-    d.rounded_rectangle([2, 2, 29, 29], radius=5, fill=hexc('#ffb703'), outline=hexc('#b36b00'))
-    for dy in (0, 8): d.polygon([(16, 5 + dy), (24, 13 + dy), (19, 13 + dy), (19, 19 + dy), (13, 19 + dy), (13, 13 + dy), (8, 13 + dy)], fill=hexc('#fff3b0'))   # two chevron arrows, both inside the tile
-    img.save(f'{ART}/boost.png')
+    g = HD(128, 128); g.rrect([6, 6, 122, 122], 20, fill=hexc('#b36b00')); g.rrect([8, 8, 120, 118], 18, fill=hexc('#ffb703')); g.rrect([8, 8, 120, 60], 18, fill=hexc('#ffc93c'))
+    for dy in (0, 34):
+        g.polygon([(64, 24 + dy), (98, 56 + dy), (78, 56 + dy), (78, 74 + dy), (50, 74 + dy), (50, 56 + dy), (30, 56 + dy)], fill=hexc('#b36b00'))
+        g.polygon([(64, 20 + dy), (96, 52 + dy), (77, 52 + dy), (77, 70 + dy), (51, 70 + dy), (51, 52 + dy), (32, 52 + dy)], fill=hexc('#fff3b0'))
+    g.out().save(f'{ART}/boost.png')
 
 # ================================================================ sound effects (mono, 22.05 kHz, 16-bit)
 SR = 22050

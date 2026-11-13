@@ -38,7 +38,8 @@ export class Ball extends Entity {
         this.maxDragDistance = 180; // pixels; clamps how far back a shot can be pulled
         this.powerScale = 0.1; // pull-back distance -> launch speed
         this.pickRadius = 40; // how close a mousedown must land to the ball to grab it
-        this.restSpeed = 5; // below this speed the ball counts as stopped and can be re-aimed
+        this.restSpeed = 0.4; // the ball can only be grabbed once it has (all but) stopped: below this speed in pixels per frame
+        this.wasHeld = false;
         this.sinkDuration = 0.4; // fallback shrink time when there is no Animator
         this.isDragging = false;
         this.dragCurrent = new Vector2(0, 0);
@@ -73,9 +74,8 @@ export class Ball extends Entity {
         this.rigidbody = rb;
 
         this.renderer = this.addComponent(new SpriteRenderer({
-            imagePath: './assets/art/ball.png', frameWidth: 16, frameHeight: 16, frameCount: 1, columns: 1, fps: 0, sortingOrder: 3,
+            imagePath: './assets/art/ball.png', frameWidth: 64, frameHeight: 64, frameCount: 1, columns: 1, fps: 0, sortingOrder: 3,
         }));
-        this.renderer.pixelArt = true;
     }
 
     /** Sounds and puffs for whatever the ball just touched. */
@@ -118,6 +118,8 @@ export class Ball extends Entity {
 
         const mouseWorld = window.Piston.gameLoop.getMouseWorldPosition();
         const isHeld = input.isMouseButtonPressed(0);
+        const pressed = isHeld && !this.wasHeld; // a fresh press: holding the button while the ball was still rolling must not grab it
+        this.wasHeld = isHeld;
 
         if (this.isDragging) {
             if (isHeld) {
@@ -125,7 +127,7 @@ export class Ball extends Entity {
             } else {
                 this.#launch();
             }
-        } else if (isHeld && this.#isAtRest()) {
+        } else if (pressed && this.#isAtRest()) {
             if (Vector2.distance(mouseWorld, this.transform.position) <= this.pickRadius) {
                 this.isDragging = true;
                 this.dragCurrent = mouseWorld;
@@ -250,16 +252,69 @@ export class Ball extends Entity {
     }
 
     draw(ctx) {
-        if (this.isDragging) {
-            const aim = this.transform.position.clone().subtract(this.dragCurrent).rotate(-this.transform.rotation);
+        if (this.isSinking || this.inTunnel) return;
+        if (this.isDragging) { this.#drawAim(ctx); return; }
+        if (this.#isAtRest()) { // a slowly turning dashed ring says "your turn"; it is gone while the ball is moving
+            const t = performance.now() / 1000;
+            ctx.save();
             ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(aim.x, aim.y);
-            ctx.strokeStyle = '#d33';
-            ctx.lineWidth = 6;
+            ctx.arc(0, 0, this.radius + 8 + Math.sin(t * 3) * 1.5, 0, Math.PI * 2);
+            ctx.setLineDash([7, 8]);
+            ctx.lineDashOffset = -t * 16;
+            ctx.lineCap = 'round';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
             ctx.stroke();
+            ctx.restore();
         }
     }
+
+    /** The aiming guide: a faint pull-back line to the cursor, and a trail of dots (and an arrowhead) showing where the shot will go,
+     * longer and warmer the harder you pull (green, then gold, then red at full power). */
+    #drawAim(ctx) {
+        const aim = this.transform.position.clone().subtract(this.dragCurrent).rotate(-this.transform.rotation); // ball minus cursor, in the ball's own space
+        const pull = Math.min(aim.magnitude(), this.maxDragDistance);
+        if (pull < 8) return;
+        const power = pull / this.maxDragDistance;
+        const dir = aim.clone().normalize();
+        const [r, g, b] = powerColor(power);
+        ctx.save();
+        ctx.lineCap = 'round';
+
+        const handle = dir.clone().scale(-pull); // where the pull-back handle sits (the cursor, held inside the maximum pull)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(handle.x, handle.y); ctx.stroke();
+        ctx.beginPath(); ctx.arc(handle.x, handle.y, 13, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.18)'; ctx.fill();
+        ctx.lineWidth = 4; ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`; ctx.stroke();
+
+        const length = 70 + power * 230;
+        for (let d = this.radius + 14; d < length; d += 24) {
+            const k = d / length;
+            ctx.beginPath();
+            ctx.arc(dir.x * d, dir.y * d, 7 - 3.5 * k, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - 0.6 * k})`;
+            ctx.fill();
+            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(20, 30, 24, 0.35)'; ctx.stroke();
+        }
+        const tip = dir.clone().scale(length + 8), side = new Vector2(-dir.y, dir.x);
+        ctx.beginPath();
+        ctx.moveTo(tip.x + dir.x * 14, tip.y + dir.y * 14);
+        ctx.lineTo(tip.x + side.x * 11, tip.y + side.y * 11);
+        ctx.lineTo(tip.x - side.x * 11, tip.y - side.y * 11);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.45)`; ctx.fill();
+        ctx.restore();
+    }
+}
+
+/** Green at a gentle pull, gold at about half, red at full power. */
+function powerColor(p) {
+    const lerp = (a, b, t) => Math.round(a + (b - a) * t);
+    const [low, mid, high] = [[126, 231, 135], [255, 209, 102], [255, 107, 107]];
+    const [from, to, t] = p < 0.5 ? [low, mid, p / 0.5] : [mid, high, (p - 0.5) / 0.5];
+    return [lerp(from[0], to[0], t), lerp(from[1], to[1], t), lerp(from[2], to[2], t)];
 }
 
 EntityRegistry.register('Ball', Ball, 'Golf');

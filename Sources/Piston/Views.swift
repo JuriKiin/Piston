@@ -248,8 +248,9 @@ struct HierarchyList: View {
         }
         .listStyle(.sidebar)
         .dropDestination(for: String.self) { items, _ in // dropped on empty space: unparent
-            guard let k = items.first else { return false }
-            Task { await model.setParent(k, to: nil) }
+            let keys = items.flatMap { $0.split(separator: "\n").map(String.init) }
+            guard !keys.isEmpty else { return false }
+            Task { await model.setParents(keys, to: nil) }
             return true
         }
         .onDeleteCommand { model.deleteSelection() }
@@ -768,16 +769,25 @@ struct HierarchyRowView: View {
         }
         .buttonStyle(.plain)
         .listRowInsets(EdgeInsets(top: 1, leading: 4, bottom: 1, trailing: 4))
-        .draggable(e.key)
+        // Dragging a row that is part of a multi-selection drags the whole selection; otherwise just that row.
+        .draggable(model.selectedKeys.contains(e.key) && model.selectedKeys.count > 1 ? model.selectedKeys.sorted().joined(separator: "\n") : e.key)
         .dropDestination(for: String.self, action: { items, _ in
-            guard let k = items.first, model.canParent(k, under: e.key) else { return false }
-            Task { await model.setParent(k, to: e.key) }
+            let keys = items.flatMap { $0.split(separator: "\n").map(String.init) }
+            guard keys.contains(where: { model.canParent($0, under: e.key) }) else { return false }
+            Task { await model.setParents(keys, to: e.key) }
             return true
         }, isTargeted: { targeted = $0 })
         .contextMenu {
             Button("Duplicate") { Task { await model.duplicateEntity(e.key) } }
+            if model.selectedKeys.count > 1, model.selectedKeys.contains(e.key) {
+                Menu("Make Selection a Child of") {
+                    ForEach(model.entities.filter { !model.selectedKeys.contains($0.key) }, id: \.key) { target in
+                        Button(target.name.isEmpty ? target.tag : target.name) { Task { await model.setParents(Array(model.selectedKeys), to: target.key) } }
+                    }
+                }
+            }
             if model.entityDoc(e.key)?["parentKey"] as? String != nil {
-                Button("Unparent") { Task { await model.setParent(e.key, to: nil) } }
+                Button("Unparent") { Task { await model.setParents(model.selectedKeys.contains(e.key) ? Array(model.selectedKeys) : [e.key], to: nil) } }
             }
             Button("Delete", role: .destructive) { model.deleteEntity(e.key) }
         }
