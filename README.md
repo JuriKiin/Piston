@@ -4,7 +4,12 @@
 
 A native macOS editor for making 2D games, with its own web engine. Build a game in the editor, press Play, and ship it as a static website. The editor is SwiftUI; the engine is plain JavaScript on Canvas2D, and it is bundled inside the app, never copied into your project.
 
-**[▶ Play the demo: Neon Warden](https://jurikiin.com/Piston/play/)**
+<p align="center">
+  <a href="https://github.com/JuriKiin/Piston/releases/latest"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20Piston%20for%20macOS-FF5A1F?style=for-the-badge" alt="Download Piston for macOS" height="44"></a>
+  &nbsp;
+  <a href="https://jurikiin.com/Piston/play/"><img src="https://img.shields.io/badge/%E2%96%B6%20Play%20the%20demo-232730?style=for-the-badge" alt="Play the demo: Neon Warden" height="44"></a>
+</p>
+<p align="center"><sub>Apple Silicon, macOS 14+. First launch: right-click <b>Piston.app</b> → Open (the app isn't notarized).</sub></p>
 
 <p align="center">
   <img src="docs/images/neon-warden-title.jpg" width="48%" alt="Neon Warden title screen">
